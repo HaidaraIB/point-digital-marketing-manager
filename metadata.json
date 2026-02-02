@@ -1,0 +1,7 @@
+{
+  "name": "Point Digital Marketing Manager",
+  "description": "نظام إدارة متكامل لوكالة نقطة للتسويق الرقمي لإدارة عروض الأسعار، وصولات الصرف، ووصولات القبض بالدينار العراقي مع إمكانية التخصيص الكامل.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
