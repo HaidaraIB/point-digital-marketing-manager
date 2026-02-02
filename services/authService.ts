@@ -2,7 +2,7 @@
  * Auth service: JWT login, refresh, current user, logout.
  */
 import { User, UserRole } from "../types.ts";
-import { apiGet, apiUrl, isApiEnabled } from "./api.ts";
+import { apiGet, apiUrl, getApiHeaders, isApiEnabled } from "./api.ts";
 
 const TOKEN_PATH = "/api/auth/token/";
 const REFRESH_PATH = "/api/auth/refresh/";
@@ -28,7 +28,7 @@ export async function loginWithApi(credentials: LoginCredentials): Promise<User 
   const url = apiUrl(TOKEN_PATH);
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    headers: getApiHeaders(),
     credentials: "include",
     body: JSON.stringify(credentials),
   });
@@ -65,7 +65,7 @@ export async function refreshToken(): Promise<boolean> {
   const url = apiUrl(REFRESH_PATH);
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    headers: getApiHeaders(),
     credentials: "include",
     body: JSON.stringify({ refresh }),
   });

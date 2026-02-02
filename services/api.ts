@@ -13,12 +13,27 @@ const getToken = (): string | null => {
   return sessionStorage.getItem("noqta_access_token");
 };
 
-const getAuthHeaders = (): HeadersInit => {
-  const token = getToken();
+const getApiKey = (): string | undefined => import.meta.env.VITE_API_KEY;
+
+/** Headers for requests that don't have a token yet (e.g. login, refresh). */
+export const getApiHeaders = (): HeadersInit => {
+  const apiKey = getApiKey();
   const headers: HeadersInit = {
     "Content-Type": "application/json",
     Accept: "application/json",
   };
+  if (apiKey) headers["X-API-Key"] = apiKey;
+  return headers;
+};
+
+const getAuthHeaders = (): HeadersInit => {
+  const token = getToken();
+  const apiKey = getApiKey();
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  };
+  if (apiKey) headers["X-API-Key"] = apiKey;
   if (token) headers["Authorization"] = `Bearer ${token}`;
   return headers;
 };
