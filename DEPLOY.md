@@ -29,16 +29,16 @@ sudo apt-get install -y nginx
 
 ```bash
 cd /path/to/point-digital-marketing-manager-4
-rsync -avz --exclude node_modules --exclude dist . user@your-vps-ip:/var/www/pm4-frontend/
+rsync -avz --exclude node_modules --exclude dist . user@your-vps-ip:/var/www/point-digital-marketing-manager/
 ```
 
 أو استخدم `git clone` إذا كان المشروع على Git:
 
 ```bash
-sudo mkdir -p /var/www/pm4-frontend
-sudo chown $USER:$USER /var/www/pm4-frontend
-git clone <your-repo-url> /var/www/pm4-frontend
-cd /var/www/pm4-frontend
+sudo mkdir -p /var/www/point-digital-marketing-manager
+sudo chown $USER:$USER /var/www/point-digital-marketing-manager
+git clone <your-repo-url> /var/www/point-digital-marketing-manager
+cd /var/www/point-digital-marketing-manager
 ```
 
 ---
@@ -48,7 +48,7 @@ cd /var/www/pm4-frontend
 أنشئ ملف `.env` في مجلد المشروع (نفس المستوى مع `package.json`):
 
 ```bash
-cd /var/www/pm4-frontend
+cd /var/www/point-digital-marketing-manager
 nano .env
 ```
 
@@ -72,7 +72,7 @@ GEMINI_API_KEY=
 ## 4. البناء (Build)
 
 ```bash
-cd /var/www/pm4-frontend
+cd /var/www/point-digital-marketing-manager
 npm ci
 npm run build
 ```
@@ -86,7 +86,7 @@ npm run build
 أنشئ ملف تكوين لموقعك:
 
 ```bash
-sudo nano /etc/nginx/sites-available/pm4-frontend
+sudo nano /etc/nginx/sites-available/point-digital-marketing-manager
 ```
 
 المحتوى (استبدل `yourdomain.com` ونطاقك):
@@ -95,7 +95,7 @@ sudo nano /etc/nginx/sites-available/pm4-frontend
 server {
     listen 80;
     server_name yourdomain.com www.yourdomain.com;
-    root /var/www/pm4-frontend/dist;
+    root /var/www/point-digital-marketing-manager/dist;
     index index.html;
 
     location / {
@@ -116,7 +116,7 @@ server {
 تفعيل الموقع واختبار Nginx:
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/pm4-frontend /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/point-digital-marketing-manager /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
 ```
@@ -137,7 +137,7 @@ sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
 ## 7. تحديث التطبيق لاحقاً
 
 ```bash
-cd /var/www/pm4-frontend
+cd /var/www/point-digital-marketing-manager
 git pull   # إن كنت تستخدم Git
 # أو أعد رفع الملفات بـ rsync
 npm ci
