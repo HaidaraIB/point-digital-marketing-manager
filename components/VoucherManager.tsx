@@ -50,11 +50,12 @@ const VoucherManager: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete, 
 
     if (type === VoucherType.RECEIPT && partyPhone && settings.twilio.isEnabled) {
       const message = `مرحباً ${partyName}،\nتم استلام دفعة مالية بقيمة ${amount.toLocaleString()} ${CURRENCY_SYMBOLS[currency]} لسبب: ${description}.\nرقم الوصل: ${newVoucher.id}\nشكراً لتعاملكم مع ${settings.twilio.senderName}`;
-      const success = await sendSMS(settings.twilio, partyPhone, message);
+      const result = await sendSMS(settings.twilio, partyPhone, message);
       onSMSLog({
         to: partyPhone,
         body: message,
-        status: success ? 'SUCCESS' : 'FAILED'
+        status: result.success ? 'SUCCESS' : 'FAILED',
+        error: result.error
       });
     }
 

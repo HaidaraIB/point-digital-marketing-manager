@@ -26,7 +26,8 @@ export const getApiHeaders = (): HeadersInit => {
   return headers;
 };
 
-const getAuthHeaders = (): HeadersInit => {
+/** Headers for authenticated requests (includes JWT). */
+export const getAuthHeaders = (): HeadersInit => {
   const token = getToken();
   const apiKey = getApiKey();
   const headers: HeadersInit = {

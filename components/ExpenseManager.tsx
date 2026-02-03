@@ -78,7 +78,13 @@ const ExpenseManager: React.FC<Props> = ({ vouchers, settings, onAdd, onUpdate, 
 
     if (!editingId && expenseType === 'SALARY' && partyPhone && settings.twilio.isEnabled) {
       const message = `مرحباً ${partyName}،\nتم إيداع راتبك لشهر (${salaryMonth}) بمبلغ ${amount.toLocaleString()} ${CURRENCY_SYMBOLS[currency]}.`;
-      await sendSMS(settings.twilio, partyPhone, message);
+      const result = await sendSMS(settings.twilio, partyPhone, message);
+      onSMSLog({
+        to: partyPhone,
+        body: message,
+        status: result.success ? 'SUCCESS' : 'FAILED',
+        error: result.error
+      });
     }
 
     if (editingId && canEdit) onUpdate(voucherData);

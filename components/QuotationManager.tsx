@@ -60,11 +60,12 @@ const QuotationManager: React.FC<Props> = ({ quotations, settings, onAdd, onDele
 
     if (clientPhone && settings.twilio.isEnabled) {
       const message = `عزيزنا ${clientName}،\nتم إرسال عرض سعر رسمي من ${settings.twilio.senderName} بقيمة ${total.toLocaleString()} ${CURRENCY_SYMBOLS[currency]}.\nرقم العرض: ${newQuotation.id}`;
-      const success = await sendSMS(settings.twilio, clientPhone, message);
+      const result = await sendSMS(settings.twilio, clientPhone, message);
       onSMSLog({
         to: clientPhone,
         body: message,
-        status: success ? 'SUCCESS' : 'FAILED'
+        status: result.success ? 'SUCCESS' : 'FAILED',
+        error: result.error
       });
     }
 
