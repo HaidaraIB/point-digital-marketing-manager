@@ -6,9 +6,10 @@ interface Props {
   users: User[];
   onAdd: (user: User) => void;
   onDelete: (id: string) => void;
+  canEdit?: boolean;
 }
 
-const UserManager: React.FC<Props> = ({ users, onAdd, onDelete }) => {
+const UserManager: React.FC<Props> = ({ users, onAdd, onDelete, canEdit = true }) => {
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
@@ -117,6 +118,7 @@ const UserManager: React.FC<Props> = ({ users, onAdd, onDelete }) => {
               <div className="h-12 w-12 bg-purple-50 rounded-xl flex items-center justify-center text-2xl transform transition-transform group-hover:rotate-12">
                 {user.role === UserRole.ADMIN ? '👑' : '💼'}
               </div>
+              {canEdit && (
               <button 
                 onClick={() => onDelete(user.id)}
                 className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity p-1"
@@ -124,6 +126,7 @@ const UserManager: React.FC<Props> = ({ users, onAdd, onDelete }) => {
               >
                 🗑️
               </button>
+            )}
             </div>
             <div>
               <h3 className="font-bold text-gray-900 text-lg">{user.name}</h3>

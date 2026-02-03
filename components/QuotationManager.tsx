@@ -12,9 +12,10 @@ interface Props {
   onDelete: (id: string) => void;
   onStatusUpdate: (id: string, status: QuotationStatus) => void;
   onSMSLog: (log: Omit<SMSLog, 'id' | 'timestamp'>) => void;
+  canEdit?: boolean;
 }
 
-const QuotationManager: React.FC<Props> = ({ quotations, settings, onAdd, onDelete, onStatusUpdate, onSMSLog }) => {
+const QuotationManager: React.FC<Props> = ({ quotations, settings, onAdd, onDelete, onStatusUpdate, onSMSLog, canEdit = true }) => {
   const [showForm, setShowForm] = useState(false);
   const [selectedQuotation, setSelectedQuotation] = useState<Quotation | null>(null);
   const [clientName, setClientName] = useState('');
@@ -250,7 +251,7 @@ const QuotationManager: React.FC<Props> = ({ quotations, settings, onAdd, onDele
                </td>
                <td className="p-4 flex items-center justify-center gap-2">
                  <button onClick={() => setSelectedQuotation(q)} className="bg-purple-50 text-purple-600 px-3 py-1 rounded-lg text-[10px] font-black">🖨️ طباعة</button>
-                 <button onClick={() => onDelete(q.id)} className="text-red-200">🗑️</button>
+                 {canEdit && <button onClick={() => onDelete(q.id)} className="text-red-200">🗑️</button>}
                </td>
              </tr>)}
            </tbody>

@@ -21,15 +21,22 @@ const Dashboard: React.FC<DashboardProps> = ({ data }) => {
     const receiptsIQD = data.vouchers
       .filter(v => v.type === VoucherType.RECEIPT)
       .reduce((sum, v) => sum + convertToIQD(v.amount, v.currency), 0);
-    
-    const expensesIQD = data.vouchers
+
+    const allPaymentsIQD = data.vouchers
       .filter(v => v.type === VoucherType.PAYMENT)
       .reduce((sum, v) => sum + convertToIQD(v.amount, v.currency), 0);
 
+    const ownerWithdrawalsIQD = data.vouchers
+      .filter(v => v.type === VoucherType.PAYMENT && v.category === 'OWNER_WITHDRAWAL')
+      .reduce((sum, v) => sum + convertToIQD(v.amount, v.currency), 0);
+
+    const operatingExpensesIQD = allPaymentsIQD - ownerWithdrawalsIQD;
+
     return {
       receipts: receiptsIQD,
-      expenses: expensesIQD,
-      balance: receiptsIQD - expensesIQD
+      operatingExpenses: operatingExpensesIQD,
+      ownerWithdrawals: ownerWithdrawalsIQD,
+      balance: receiptsIQD - allPaymentsIQD
     };
   }, [data]);
 
@@ -42,21 +49,26 @@ const Dashboard: React.FC<DashboardProps> = ({ data }) => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
-          <p className="text-gray-500 text-sm mb-1 font-medium">إجمالي المقبوضات (بالدينار)</p>
+          <p className="text-gray-500 text-sm mb-1 font-medium">إجمالي المقبوضات</p>
           <h3 className="text-2xl font-black text-green-600 tracking-tight group-hover:scale-105 transition-transform">{totals.receipts.toLocaleString()} <span className="text-xs font-bold opacity-70">د.ع</span></h3>
-          <p className="text-[10px] text-gray-400 mt-1 font-bold">بما يعادل: {(totals.receipts / data.settings.exchangeRate).toLocaleString(undefined, {maximumFractionDigits:0})} $</p>
+          <p className="text-[10px] text-gray-400 mt-1 font-bold">≈ {(totals.receipts / data.settings.exchangeRate).toLocaleString(undefined, { maximumFractionDigits: 0 })} $</p>
         </div>
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
-          <p className="text-gray-500 text-sm mb-1 font-medium">إجمالي المصروفات (بالدينار)</p>
-          <h3 className="text-2xl font-black text-red-500 tracking-tight group-hover:scale-105 transition-transform">{totals.expenses.toLocaleString()} <span className="text-xs font-bold opacity-70">د.ع</span></h3>
-          <p className="text-[10px] text-gray-400 mt-1 font-bold">بما يعادل: {(totals.expenses / data.settings.exchangeRate).toLocaleString(undefined, {maximumFractionDigits:0})} $</p>
+          <p className="text-gray-500 text-sm mb-1 font-medium">المصاريف التشغيلية</p>
+          <h3 className="text-2xl font-black text-red-500 tracking-tight group-hover:scale-105 transition-transform">{totals.operatingExpenses.toLocaleString()} <span className="text-xs font-bold opacity-70">د.ع</span></h3>
+          <p className="text-[10px] text-gray-400 mt-1 font-bold">≈ {(totals.operatingExpenses / data.settings.exchangeRate).toLocaleString(undefined, { maximumFractionDigits: 0 })} $</p>
         </div>
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
-          <p className="text-gray-500 text-sm mb-1 font-medium">الرصيد المتاح (بالدينار)</p>
+          <p className="text-gray-500 text-sm mb-1 font-medium">سحوبات المالك</p>
+          <h3 className="text-2xl font-black text-indigo-600 tracking-tight group-hover:scale-105 transition-transform">{totals.ownerWithdrawals.toLocaleString()} <span className="text-xs font-bold opacity-70">د.ع</span></h3>
+          <p className="text-[10px] text-gray-400 mt-1 font-bold">≈ {(totals.ownerWithdrawals / data.settings.exchangeRate).toLocaleString(undefined, { maximumFractionDigits: 0 })} $</p>
+        </div>
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
+          <p className="text-gray-500 text-sm mb-1 font-medium">الرصيد المتاح</p>
           <h3 className="text-2xl font-black text-purple-600 tracking-tight group-hover:scale-105 transition-transform">{totals.balance.toLocaleString()} <span className="text-xs font-bold opacity-70">د.ع</span></h3>
-          <p className="text-[10px] text-gray-400 mt-1 font-bold">بما يعادل: {(totals.balance / data.settings.exchangeRate).toLocaleString(undefined, {maximumFractionDigits:0})} $</p>
+          <p className="text-[10px] text-gray-400 mt-1 font-bold">≈ {(totals.balance / data.settings.exchangeRate).toLocaleString(undefined, { maximumFractionDigits: 0 })} $</p>
         </div>
       </div>
 

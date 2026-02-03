@@ -11,9 +11,10 @@ interface Props {
   onAdd: (v: Voucher) => void;
   onDelete: (id: string) => void;
   onSMSLog: (log: Omit<SMSLog, 'id' | 'timestamp'>) => void;
+  canEdit?: boolean;
 }
 
-const VoucherManager: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete, onSMSLog }) => {
+const VoucherManager: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete, onSMSLog, canEdit = true }) => {
   const [showForm, setShowForm] = useState(false);
   const [selectedVoucher, setSelectedVoucher] = useState<Voucher | null>(null);
   const [type, setType] = useState<VoucherType>(VoucherType.RECEIPT);
@@ -251,7 +252,7 @@ const VoucherManager: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete, 
                   <td className="p-4 text-xs text-gray-500 max-w-[200px] truncate">{v.description}</td>
                   <td className="p-4 flex items-center justify-center gap-2">
                     <button onClick={() => setSelectedVoucher(v)} className="bg-purple-50 text-purple-600 px-3 py-1 rounded-lg text-[10px] font-black hover:bg-purple-600 hover:text-white transition-all">🖨️ طباعة</button>
-                    <button onClick={() => onDelete(v.id)} className="text-red-300 hover:text-red-600 transition-colors">🗑️</button>
+                    {canEdit && <button onClick={() => onDelete(v.id)} className="text-red-300 hover:text-red-600 transition-colors">🗑️</button>}
                   </td>
                 </tr>
               );

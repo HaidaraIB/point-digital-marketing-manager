@@ -5,9 +5,10 @@ import { SMSLog } from '../types.ts';
 interface Props {
   logs: SMSLog[];
   onClear: () => void;
+  canClear?: boolean;
 }
 
-const SMSLogManager: React.FC<Props> = ({ logs, onClear }) => {
+const SMSLogManager: React.FC<Props> = ({ logs, onClear, canClear = true }) => {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
@@ -15,12 +16,14 @@ const SMSLogManager: React.FC<Props> = ({ logs, onClear }) => {
           <h2 className="text-xl font-bold">سجل إشعارات SMS</h2>
           <p className="text-gray-500 text-sm">تتبع حالة الرسائل المرسلة للعملاء والموظفين</p>
         </div>
-        <button 
-          onClick={onClear}
-          className="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-red-600 hover:text-white transition-all"
-        >
-          🗑️ مسح السجل
-        </button>
+        {canClear && (
+          <button 
+            onClick={onClear}
+            className="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-red-600 hover:text-white transition-all"
+          >
+            🗑️ مسح السجل
+          </button>
+        )}
       </div>
 
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">

@@ -12,9 +12,10 @@ interface Props {
   onUpdate: (v: Voucher) => void;
   onDelete: (id: string) => void;
   onSMSLog: (log: Omit<SMSLog, 'id' | 'timestamp'>) => void;
+  canEdit?: boolean;
 }
 
-const ExpenseManager: React.FC<Props> = ({ vouchers, settings, onAdd, onUpdate, onDelete, onSMSLog }) => {
+const ExpenseManager: React.FC<Props> = ({ vouchers, settings, onAdd, onUpdate, onDelete, onSMSLog, canEdit = true }) => {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [expenseType, setExpenseType] = useState<'DAILY' | 'SALARY'>('DAILY');
@@ -80,8 +81,8 @@ const ExpenseManager: React.FC<Props> = ({ vouchers, settings, onAdd, onUpdate, 
       await sendSMS(settings.twilio, partyPhone, message);
     }
 
-    if (editingId) onUpdate(voucherData);
-    else onAdd(voucherData);
+    if (editingId && canEdit) onUpdate(voucherData);
+    else if (!editingId) onAdd(voucherData);
 
     setIsSending(false);
     setShowForm(false);
@@ -236,8 +237,8 @@ const ExpenseManager: React.FC<Props> = ({ vouchers, settings, onAdd, onUpdate, 
                  <td className="p-4 text-xs text-gray-500">{v.description}</td>
                  <td className="p-4 text-sm font-black text-red-600">{v.amount.toLocaleString()} {CURRENCY_SYMBOLS[v.currency]}</td>
                  <td className="p-4 flex items-center justify-center gap-2">
-                   <button onClick={() => handleEdit(v)} className="p-2 text-blue-400 hover:scale-110 transition-transform">✏️</button>
-                   <button onClick={() => onDelete(v.id)} className="p-2 text-red-300 hover:text-red-500 transition-colors">🗑️</button>
+                   {canEdit && <button onClick={() => handleEdit(v)} className="p-2 text-blue-400 hover:scale-110 transition-transform">✏️</button>}
+                   {canEdit && <button onClick={() => onDelete(v.id)} className="p-2 text-red-300 hover:text-red-500 transition-colors">🗑️</button>}
                  </td>
                </tr>
              ))}

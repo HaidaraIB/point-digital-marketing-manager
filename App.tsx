@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { AppData, Quotation, Voucher, Contract, AgencySettings, User, QuotationStatus, SMSLog } from './types.ts';
+import { AppData, Quotation, Voucher, Contract, AgencySettings, User, UserRole, QuotationStatus, SMSLog } from './types.ts';
 import { INITIAL_DATA } from './constants.tsx';
 import { isApiEnabled } from './services/api.ts';
 import { getCurrentUser, logoutApi } from './services/authService.ts';
@@ -59,6 +59,12 @@ const App: React.FC = () => {
   useEffect(() => {
     loadInitial();
   }, [loadInitial]);
+
+  useEffect(() => {
+    if (user?.role === UserRole.ACCOUNTANT && (activeTab === 'withdrawals' || activeTab === 'settings')) {
+      setActiveTab('dashboard');
+    }
+  }, [user?.role, activeTab]);
 
   const saveToLocal = (newData: AppData) => {
     if (useApi) return;
@@ -280,6 +286,7 @@ const App: React.FC = () => {
   };
 
   const handleTabChange = (tab: string) => {
+    if (user?.role === UserRole.ACCOUNTANT && (tab === 'withdrawals' || tab === 'settings')) return;
     setActiveTab(tab);
     setIsSidebarOpen(false);
   };
@@ -324,7 +331,7 @@ const App: React.FC = () => {
         fixed inset-y-0 right-0 z-50 w-64 bg-white transform transition-transform duration-300 ease-in-out no-print
         lg:relative lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'}
       `}>
-        <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} settings={data.settings} />
+        <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} settings={data.settings} user={user} />
       </div>
 
       {isSidebarOpen && (
@@ -369,6 +376,7 @@ const App: React.FC = () => {
             onDelete={handleDeleteQuotation}
             onStatusUpdate={handleQuotationStatusUpdate}
             onSMSLog={addSMSLog}
+            canEdit={user.role === UserRole.ADMIN}
           />
         )}
 
@@ -379,6 +387,7 @@ const App: React.FC = () => {
             onAdd={handleAddVoucher}
             onDelete={handleDeleteVoucher}
             onSMSLog={addSMSLog}
+            canEdit={user.role === UserRole.ADMIN}
           />
         )}
 
@@ -390,10 +399,11 @@ const App: React.FC = () => {
             onUpdate={handleUpdateVoucher}
             onDelete={handleDeleteVoucher}
             onSMSLog={addSMSLog}
+            canEdit={user.role === UserRole.ADMIN}
           />
         )}
 
-        {activeTab === 'withdrawals' && (
+        {activeTab === 'withdrawals' && user.role === UserRole.ADMIN && (
           <OwnerWithdrawals
             vouchers={data.vouchers}
             settings={data.settings}
@@ -403,7 +413,7 @@ const App: React.FC = () => {
         )}
 
         {activeTab === 'sms-logs' && (
-          <SMSLogManager logs={data.smsLogs} onClear={handleClearSmsLogs} />
+          <SMSLogManager logs={data.smsLogs} onClear={handleClearSmsLogs} canClear={user.role === UserRole.ADMIN} />
         )}
 
         {activeTab === 'contracts' && (
@@ -412,14 +422,15 @@ const App: React.FC = () => {
             settings={data.settings}
             onAdd={handleAddContract}
             onDelete={handleDeleteContract}
+            canEdit={user.role === UserRole.ADMIN}
           />
         )}
 
         {activeTab === 'users' && (
-          <UserManager users={data.users} onAdd={handleAddUser} onDelete={handleDeleteUser} />
+          <UserManager users={data.users} onAdd={handleAddUser} onDelete={handleDeleteUser} canEdit={user.role === UserRole.ADMIN} />
         )}
 
-        {activeTab === 'settings' && (
+        {activeTab === 'settings' && user.role === UserRole.ADMIN && (
           <SettingsManager settings={data.settings} onUpdate={handleUpdateSettings} />
         )}
           </div>

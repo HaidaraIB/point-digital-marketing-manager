@@ -1,14 +1,16 @@
 import React from 'react';
-import { AgencySettings } from '../types.ts';
+import { AgencySettings, User, UserRole } from '../types.ts';
 
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   settings: AgencySettings;
+  user: User | null;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, settings }) => {
-  const menuItems = [
+const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, settings, user }) => {
+  const isAccountant = user?.role === UserRole.ACCOUNTANT;
+  const allMenuItems = [
     { id: 'dashboard', label: 'لوحة التحكم', icon: '📊' },
     { id: 'quotations', label: 'عروض الأسعار', icon: '📝' },
     { id: 'vouchers', label: 'الوصولات', icon: '🧾' },
@@ -19,6 +21,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, settings }) 
     { id: 'users', label: 'المستخدمين', icon: '👥' },
     { id: 'settings', label: 'الإعدادات', icon: '⚙️' },
   ];
+  const menuItems = isAccountant
+    ? allMenuItems.filter((m) => m.id !== 'withdrawals' && m.id !== 'settings')
+    : allMenuItems;
 
   return (
     <div className="h-full bg-white flex flex-col no-print border-l lg:border-l-0 border-gray-100">
