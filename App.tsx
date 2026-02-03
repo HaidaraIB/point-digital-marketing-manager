@@ -133,7 +133,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleAddQuotation = async (q: Quotation) => {
+  const handleAddQuotation = async (q: Quotation): Promise<Quotation | null> => {
     if (useApi) {
       try {
         const payload = {
@@ -146,13 +146,17 @@ const App: React.FC = () => {
           currency: q.currency,
         };
         const created = await dataService.createQuotation(payload);
-        if (created) setData(prev => ({ ...prev, quotations: [created, ...prev.quotations] }));
+        if (created) {
+          setData(prev => ({ ...prev, quotations: [created, ...prev.quotations] }));
+          return created;
+        }
       } catch (e) {
         console.error(e);
       }
-    } else {
-      syncUpdate(prev => ({ ...prev, quotations: [q, ...prev.quotations] }));
+      return null;
     }
+    syncUpdate(prev => ({ ...prev, quotations: [q, ...prev.quotations] }));
+    return q;
   };
 
   const handleDeleteQuotation = async (id: string) => {
@@ -173,7 +177,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleAddVoucher = async (v: Voucher) => {
+  const handleAddVoucher = async (v: Voucher): Promise<Voucher | null> => {
     if (useApi) {
       try {
         const payload = {
@@ -187,13 +191,17 @@ const App: React.FC = () => {
           category: v.category,
         };
         const created = await dataService.createVoucher(payload);
-        if (created) setData(prev => ({ ...prev, vouchers: [created, ...prev.vouchers] }));
+        if (created) {
+          setData(prev => ({ ...prev, vouchers: [created, ...prev.vouchers] }));
+          return created;
+        }
       } catch (e) {
         console.error(e);
       }
-    } else {
-      syncUpdate(prev => ({ ...prev, vouchers: [v, ...prev.vouchers] }));
+      return null;
     }
+    syncUpdate(prev => ({ ...prev, vouchers: [v, ...prev.vouchers] }));
+    return v;
   };
 
   const handleUpdateVoucher = async (v: Voucher) => {

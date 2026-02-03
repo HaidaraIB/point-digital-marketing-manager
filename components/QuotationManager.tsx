@@ -8,7 +8,7 @@ import PhoneInput from './PhoneInput.tsx';
 interface Props {
   quotations: Quotation[];
   settings: AgencySettings;
-  onAdd: (q: Quotation) => void;
+  onAdd: (q: Quotation) => Promise<Quotation | null>;
   onDelete: (id: string) => void;
   onStatusUpdate: (id: string, status: QuotationStatus) => void;
   onSMSLog: (log: Omit<SMSLog, 'id' | 'timestamp'>) => void;
@@ -42,7 +42,7 @@ const QuotationManager: React.FC<Props> = ({ quotations, settings, onAdd, onDele
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!clientName || items.length === 0) return;
-    
+
     setIsSending(true);
 
     const total = items.reduce((sum, item) => sum + item.price, 0);
@@ -58,8 +58,11 @@ const QuotationManager: React.FC<Props> = ({ quotations, settings, onAdd, onDele
       status: QuotationStatus.PENDING,
     };
 
+    const added = await onAdd(newQuotation);
+    const quotationForSms = added || newQuotation;
+
     if (clientPhone && settings.twilio.isEnabled) {
-      const message = `عزيزنا ${clientName}،\nتم إرسال عرض سعر رسمي من ${settings.twilio.senderName} بقيمة ${total.toLocaleString()} ${CURRENCY_SYMBOLS[currency]}.\nرقم العرض: ${newQuotation.id}`;
+      const message = `عزيزنا ${clientName}، تم إرسال عرض سعر رسمي من ${settings.name} رقم العرض: ${quotationForSms.id} يرجى مراجعة الواتساب او بريدكم الالكتروني، شكراً لتعاملكم معنا`;
       const result = await sendSMS(settings.twilio, clientPhone, message);
       onSMSLog({
         to: clientPhone,
@@ -69,7 +72,6 @@ const QuotationManager: React.FC<Props> = ({ quotations, settings, onAdd, onDele
       });
     }
 
-    onAdd(newQuotation);
     setClientName('');
     setClientPhone('');
     setItems([]);

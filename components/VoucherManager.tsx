@@ -8,7 +8,7 @@ import PhoneInput from './PhoneInput.tsx';
 interface Props {
   vouchers: Voucher[];
   settings: AgencySettings;
-  onAdd: (v: Voucher) => void;
+  onAdd: (v: Voucher) => Promise<Voucher | null>;
   onDelete: (id: string) => void;
   onSMSLog: (log: Omit<SMSLog, 'id' | 'timestamp'>) => void;
   canEdit?: boolean;
@@ -48,8 +48,11 @@ const VoucherManager: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete, 
       category: 'VOUCHER'
     };
 
+    const added = await onAdd(newVoucher);
+    const voucherForSms = added || newVoucher;
+
     if (type === VoucherType.RECEIPT && partyPhone && settings.twilio.isEnabled) {
-      const message = `مرحباً ${partyName}،\nتم استلام دفعة مالية بقيمة ${amount.toLocaleString()} ${CURRENCY_SYMBOLS[currency]} لسبب: ${description}.\nرقم الوصل: ${newVoucher.id}\nشكراً لتعاملكم مع ${settings.twilio.senderName}`;
+      const message = `مرحباً ${partyName}،\nتم استلام دفعة مالية بقيمة ${voucherForSms.amount.toLocaleString()} ${CURRENCY_SYMBOLS[currency]} لسبب: ${description}.\nرقم الوصل: ${voucherForSms.id}\nشكراً لتعاملكم مع ${settings.twilio.senderName}`;
       const result = await sendSMS(settings.twilio, partyPhone, message);
       onSMSLog({
         to: partyPhone,
@@ -59,7 +62,6 @@ const VoucherManager: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete, 
       });
     }
 
-    onAdd(newVoucher);
     setAmount(0);
     setPartyName('');
     setPartyPhone('');
