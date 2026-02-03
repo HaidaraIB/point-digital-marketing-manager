@@ -17,6 +17,17 @@
       }
 
       @media print {
+        @page {
+          size: A4;
+          margin: 0;
+        }
+        html, body {
+          margin: 0 !important;
+          padding: 0 !important;
+          background: white !important;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
         .no-print {
           display: none !important;
         }
@@ -25,6 +36,28 @@
         }
         body, div, p, span, h1, h2, h3, h4, table, th, td {
           font-family: 'Almarai', sans-serif !important;
+        }
+        /* ورقة A4 للوصولات: صفحة واحدة بالضبط، بدون تصغير/تكبير */
+        .print-a4-sheet {
+          width: 210mm !important;
+          min-width: 210mm !important;
+          max-width: 210mm !important;
+          height: 297mm !important;
+          min-height: 297mm !important;
+          max-height: 297mm !important;
+          page-break-after: always;
+          page-break-inside: avoid;
+          overflow: hidden !important;
+          box-sizing: border-box !important;
+        }
+        .print-a4-sheet:last-child {
+          page-break-after: auto;
+        }
+        /* كل نصف صفحة (نسخة عميل / نسخة شركة) بارتفاع ثابت لملء A4 */
+        .print-a4-sheet .voucher-half {
+          height: 148.5mm;
+          min-height: 148.5mm;
+          max-height: 148.5mm;
         }
         /* منع ظهور شريط التمرير على الورقة عند الطباعة */
         html, body, .flex-1, main, [class*="overflow"] {

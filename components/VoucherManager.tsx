@@ -161,13 +161,13 @@ const VoucherManager: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete, 
           </button>
         </div>
 
-        <div className="bg-white mx-auto shadow-2xl print:shadow-none rounded-xl print:rounded-none overflow-hidden" style={{ width: '210mm', height: '297mm' }}>
-          {renderVoucherContent(selectedVoucher, "نسخة العميل")}
-          <div className="relative h-0 border-t-2 border-dashed border-gray-300 no-print">
+        <div className="print-a4-sheet bg-white mx-auto shadow-2xl print:shadow-none rounded-xl print:rounded-none overflow-hidden flex flex-col" style={{ width: '210mm', height: '297mm' }}>
+          <div className="voucher-half shrink-0">{renderVoucherContent(selectedVoucher, "نسخة العميل")}</div>
+          <div className="relative h-0 border-t-2 border-dashed border-gray-300 no-print shrink-0">
             <span className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-[8px] font-black text-gray-300 uppercase">Cut Here / مقص</span>
           </div>
-          <div className="hidden print:block h-0 border-t border-dashed border-gray-400"></div>
-          {renderVoucherContent(selectedVoucher, "نسخة الشركة")}
+          <div className="hidden print:block shrink-0 border-t border-dashed border-gray-400" style={{ minHeight: '1px' }}></div>
+          <div className="voucher-half shrink-0">{renderVoucherContent(selectedVoucher, "نسخة الشركة")}</div>
         </div>
       </div>
     );
