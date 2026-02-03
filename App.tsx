@@ -12,6 +12,7 @@ import SettingsManager from './components/SettingsManager.tsx';
 import UserManager from './components/UserManager.tsx';
 import ContractManager from './components/ContractManager.tsx';
 import ExpenseManager from './components/ExpenseManager.tsx';
+import OwnerWithdrawals from './components/OwnerWithdrawals.tsx';
 import SMSLogManager from './components/SMSLogManager.tsx';
 import Login from './components/Login.tsx';
 
@@ -20,6 +21,7 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
   const STORAGE_KEY = 'noqta_data';
@@ -277,6 +279,11 @@ const App: React.FC = () => {
     }
   };
 
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setIsSidebarOpen(false);
+  };
+
   const handleUpdateSettings = async (s: AgencySettings) => {
     if (useApi) {
       const updated = await dataService.updateSettings(s);
@@ -312,19 +319,47 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 font-sans" dir="rtl">
-      <div className="w-64 flex-shrink-0 h-full">
-        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} settings={data.settings} />
+    <div className="flex h-screen bg-gray-50 font-sans overflow-hidden" dir="rtl">
+      <div className={`
+        fixed inset-y-0 right-0 z-50 w-64 bg-white transform transition-transform duration-300 ease-in-out no-print
+        lg:relative lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'}
+      `}>
+        <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} settings={data.settings} />
       </div>
-      <main className="flex-1 overflow-y-auto p-8">
-        <header className="mb-6 flex justify-between items-center no-print">
-          <h1 className="text-xl font-bold text-gray-800">أهلاً بك، {user.name.split(' ')[0]}</h1>
-          <button onClick={handleLogout} className="text-xs bg-gray-100 hover:bg-red-50 hover:text-red-500 px-3 py-2 rounded-lg font-bold transition-all text-gray-500">
-            تسجيل الخروج
+
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <header className="lg:hidden bg-white border-b border-gray-200 p-4 flex justify-between items-center no-print">
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
           </button>
+          <div className="flex items-center gap-2">
+            <span className="font-black text-purple-800 text-sm">{data.settings.name}</span>
+            <img src={data.settings.logo} className="h-8 w-8 object-contain" alt="Logo" />
+          </div>
         </header>
 
-        {activeTab === 'dashboard' && <Dashboard data={data} />}
+        <main className="flex-1 overflow-y-auto p-4 md:p-8">
+          <div className="max-w-7xl mx-auto space-y-8">
+            <header className="hidden lg:flex mb-6 justify-between items-center no-print">
+              <h1 className="text-xl font-bold text-gray-800">أهلاً بك، {user.name.split(' ')[0]}</h1>
+              <button onClick={handleLogout} className="text-xs bg-gray-100 hover:bg-red-50 hover:text-red-500 px-3 py-2 rounded-lg font-bold transition-all text-gray-500">
+                تسجيل الخروج
+              </button>
+            </header>
+
+            {activeTab === 'dashboard' && <Dashboard data={data} />}
 
         {activeTab === 'quotations' && (
           <QuotationManager
@@ -358,6 +393,15 @@ const App: React.FC = () => {
           />
         )}
 
+        {activeTab === 'withdrawals' && (
+          <OwnerWithdrawals
+            vouchers={data.vouchers}
+            settings={data.settings}
+            onAdd={handleAddVoucher}
+            onDelete={handleDeleteVoucher}
+          />
+        )}
+
         {activeTab === 'sms-logs' && (
           <SMSLogManager logs={data.smsLogs} onClear={handleClearSmsLogs} />
         )}
@@ -378,7 +422,9 @@ const App: React.FC = () => {
         {activeTab === 'settings' && (
           <SettingsManager settings={data.settings} onUpdate={handleUpdateSettings} />
         )}
-      </main>
+          </div>
+        </main>
+      </div>
     </div>
   );
 };

@@ -204,7 +204,7 @@ interface VoucherApi {
   description: string;
   partyName: string;
   partyPhone?: string;
-  category?: "SALARY" | "DAILY" | "GENERAL" | "VOUCHER";
+  category?: "SALARY" | "DAILY" | "GENERAL" | "VOUCHER" | "OWNER_WITHDRAWAL";
 }
 
 interface ContractApi {
@@ -269,7 +269,7 @@ export type VoucherPayload = {
   description: string;
   partyName: string;
   partyPhone?: string;
-  category?: "SALARY" | "DAILY" | "GENERAL" | "VOUCHER";
+  category?: "SALARY" | "DAILY" | "GENERAL" | "VOUCHER" | "OWNER_WITHDRAWAL";
 };
 
 export type ContractPayload = {

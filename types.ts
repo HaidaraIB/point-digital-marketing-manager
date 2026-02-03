@@ -55,7 +55,7 @@ export interface Voucher {
   description: string;
   partyName: string; 
   partyPhone?: string;
-  category?: 'SALARY' | 'DAILY' | 'GENERAL' | 'VOUCHER';
+  category?: 'SALARY' | 'DAILY' | 'GENERAL' | 'VOUCHER' | 'OWNER_WITHDRAWAL';
 }
 
 export interface TwilioConfig {
