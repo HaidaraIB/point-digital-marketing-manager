@@ -77,7 +77,7 @@ const VoucherManager: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete, 
     const eqCurr = voucher.currency === 'IQD' ? 'USD' : 'IQD';
 
     return (
-      <div className="relative bg-white p-[10mm] border-[6px] border-double border-gray-300 h-[148.5mm] flex flex-col justify-between overflow-hidden">
+      <div className="voucher-content relative bg-white p-[10mm] border-[6px] border-double border-gray-300 h-[148.5mm] flex flex-col justify-between overflow-hidden">
         <div className="absolute top-4 left-4 bg-black text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase z-10">
           {copyType}
         </div>
