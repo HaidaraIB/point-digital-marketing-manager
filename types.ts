@@ -55,7 +55,25 @@ export interface Voucher {
   description: string;
   partyName: string; 
   partyPhone?: string;
-  category?: 'SALARY' | 'DAILY' | 'GENERAL' | 'VOUCHER' | 'OWNER_WITHDRAWAL';
+  category?: 'SALARY' | 'DAILY' | 'GENERAL' | 'VOUCHER' | 'OWNER_WITHDRAWAL' | 'FREELANCE';
+}
+
+export interface Freelancer {
+  id: string;
+  name: string;
+  phone: string;
+  role: 'PHOTOGRAPHER' | 'EDITOR';
+}
+
+export interface FreelanceWork {
+  id: string;
+  freelancerId: string;
+  description: string;
+  date: string;
+  price: number;
+  currency: Currency;
+  isPaid: boolean;
+  paymentId?: string;
 }
 
 export interface TwilioConfig {
@@ -111,6 +129,8 @@ export interface AppData {
   quotations: Quotation[];
   vouchers: Voucher[];
   contracts: Contract[];
+  freelancers: Freelancer[];
+  freelanceWorks: FreelanceWork[];
   settings: AgencySettings;
   users: User[];
   smsLogs: SMSLog[];

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { AppData, Quotation, Voucher, Contract, AgencySettings, User, UserRole, QuotationStatus, SMSLog } from './types.ts';
+import { AppData, Quotation, Voucher, Contract, AgencySettings, User, UserRole, QuotationStatus, SMSLog, Freelancer, FreelanceWork } from './types.ts';
 import { INITIAL_DATA } from './constants.tsx';
 import { isApiEnabled } from './services/api.ts';
 import { getCurrentUser, logoutApi } from './services/authService.ts';
@@ -13,6 +13,7 @@ import UserManager from './components/UserManager.tsx';
 import ContractManager from './components/ContractManager.tsx';
 import ExpenseManager from './components/ExpenseManager.tsx';
 import OwnerWithdrawals from './components/OwnerWithdrawals.tsx';
+import FreelanceManager from './components/FreelanceManager.tsx';
 import SMSLogManager from './components/SMSLogManager.tsx';
 import Login from './components/Login.tsx';
 
@@ -45,6 +46,8 @@ const App: React.FC = () => {
           const parsed = JSON.parse(savedData);
           if (!parsed.contracts) parsed.contracts = [];
           if (!parsed.smsLogs) parsed.smsLogs = [];
+          if (!parsed.freelancers) parsed.freelancers = [];
+          if (!parsed.freelanceWorks) parsed.freelanceWorks = [];
           setData(parsed);
         }
       }
@@ -270,6 +273,73 @@ const App: React.FC = () => {
     }
   };
 
+  const handleAddFreelancer = async (f: Freelancer) => {
+    if (useApi) {
+      try {
+        const payload = { name: f.name, phone: f.phone, role: f.role };
+        const created = await dataService.createFreelancer(payload);
+        if (created) setData(prev => ({ ...prev, freelancers: [...prev.freelancers, created] }));
+      } catch (e) {
+        console.error(e);
+      }
+    } else {
+      syncUpdate(prev => ({ ...prev, freelancers: [...prev.freelancers, f] }));
+    }
+  };
+
+  const handleAddFreelanceWork = async (w: FreelanceWork) => {
+    if (useApi) {
+      try {
+        const payload = { freelancerId: w.freelancerId, description: w.description, date: w.date, price: w.price, currency: w.currency };
+        const created = await dataService.createFreelanceWork(payload);
+        if (created) setData(prev => ({ ...prev, freelanceWorks: [created, ...prev.freelanceWorks] }));
+      } catch (e) {
+        console.error(e);
+      }
+    } else {
+      syncUpdate(prev => ({ ...prev, freelanceWorks: [w, ...prev.freelanceWorks] }));
+    }
+  };
+
+  const handlePayFreelanceWork = async (workIds: string[], voucher: Voucher) => {
+    if (useApi) {
+      try {
+        const created = await dataService.createVoucher({
+          type: voucher.type,
+          amount: voucher.amount,
+          currency: voucher.currency,
+          date: voucher.date,
+          description: voucher.description,
+          partyName: voucher.partyName,
+          partyPhone: voucher.partyPhone,
+          category: 'FREELANCE',
+        });
+        if (created) {
+          const ok = await dataService.markFreelanceWorksPaid(workIds, created.id);
+          if (ok) {
+            setData(prev => ({
+              ...prev,
+              vouchers: [created, ...prev.vouchers],
+              freelanceWorks: prev.freelanceWorks.map(w =>
+                workIds.includes(w.id) ? { ...w, isPaid: true, paymentId: created.id } : w
+              ),
+            }));
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    } else {
+      syncUpdate(prev => ({
+        ...prev,
+        vouchers: [voucher, ...prev.vouchers],
+        freelanceWorks: prev.freelanceWorks.map(w =>
+          workIds.includes(w.id) ? { ...w, isPaid: true, paymentId: voucher.id } : w
+        ),
+      }));
+    }
+  };
+
   const handleAddUser = async (u: User) => {
     if (useApi) {
       try {
@@ -408,6 +478,17 @@ const App: React.FC = () => {
             onDelete={handleDeleteVoucher}
             onSMSLog={addSMSLog}
             canEdit={user.role === UserRole.ADMIN}
+          />
+        )}
+
+        {activeTab === 'freelance' && (
+          <FreelanceManager
+            freelancers={data.freelancers}
+            works={data.freelanceWorks}
+            settings={data.settings}
+            onAddFreelancer={handleAddFreelancer}
+            onAddWork={handleAddFreelanceWork}
+            onPayWork={handlePayFreelanceWork}
           />
         )}
 

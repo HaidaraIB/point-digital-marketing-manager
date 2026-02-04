@@ -14,6 +14,8 @@ import type {
   VoucherType,
   SMSLog,
   Currency,
+  Freelancer,
+  FreelanceWork,
 } from "../types.ts";
 import { apiGet, apiPost, apiPut, apiPatch, apiDelete } from "./api.ts";
 
@@ -95,6 +97,36 @@ export async function deleteContract(id: string): Promise<boolean> {
   return ok;
 }
 
+// ----- Freelancers -----
+export async function fetchFreelancers(): Promise<Freelancer[]> {
+  const list = await getList<FreelancerApi>(`${PREFIX}/freelancers/`);
+  return list.map(freelancerFromApi);
+}
+
+export async function createFreelancer(payload: FreelancerPayload): Promise<Freelancer | null> {
+  const { data, ok } = await apiPost<FreelancerApi>(`${PREFIX}/freelancers/`, payload);
+  return ok && data ? freelancerFromApi(data) : null;
+}
+
+// ----- Freelance Works -----
+export async function fetchFreelanceWorks(): Promise<FreelanceWork[]> {
+  const list = await getList<FreelanceWorkApi>(`${PREFIX}/freelance-works/`);
+  return list.map(freelanceWorkFromApi);
+}
+
+export async function createFreelanceWork(payload: FreelanceWorkPayload): Promise<FreelanceWork | null> {
+  const { data, ok } = await apiPost<FreelanceWorkApi>(`${PREFIX}/freelance-works/`, payload);
+  return ok && data ? freelanceWorkFromApi(data) : null;
+}
+
+export async function markFreelanceWorksPaid(workIds: string[], voucherId: string): Promise<boolean> {
+  const { ok } = await apiPost<{ updated: number }>(`${PREFIX}/freelance-works/mark-paid/`, {
+    workIds,
+    voucherId,
+  });
+  return ok;
+}
+
 // ----- Users -----
 export async function fetchUsers(): Promise<User[]> {
   const list = await getList<UserApi>(`${PREFIX}/users/`);
@@ -163,10 +195,12 @@ const DEFAULT_SETTINGS: AgencySettings = {
 };
 
 export async function fetchAppData(): Promise<AppData | null> {
-  const [quotations, vouchers, contracts, users, settingsList, smsLogs] = await Promise.all([
+  const [quotations, vouchers, contracts, freelancers, freelanceWorks, users, settingsList, smsLogs] = await Promise.all([
     fetchQuotations(),
     fetchVouchers(),
     fetchContracts(),
+    fetchFreelancers(),
+    fetchFreelanceWorks(),
     fetchUsers(),
     getList<AgencySettingsApi>(`${PREFIX}/settings/`),
     fetchSmsLogs(),
@@ -176,6 +210,8 @@ export async function fetchAppData(): Promise<AppData | null> {
     quotations,
     vouchers,
     contracts,
+    freelancers,
+    freelanceWorks,
     users,
     settings,
     smsLogs,
@@ -204,7 +240,25 @@ interface VoucherApi {
   description: string;
   partyName: string;
   partyPhone?: string;
-  category?: "SALARY" | "DAILY" | "GENERAL" | "VOUCHER" | "OWNER_WITHDRAWAL";
+  category?: "SALARY" | "DAILY" | "GENERAL" | "VOUCHER" | "OWNER_WITHDRAWAL" | "FREELANCE";
+}
+
+interface FreelancerApi {
+  id: string;
+  name: string;
+  phone: string;
+  role: "PHOTOGRAPHER" | "EDITOR";
+}
+
+interface FreelanceWorkApi {
+  id: string;
+  freelancerId: string;
+  description: string;
+  date: string;
+  price: string;
+  currency: Currency;
+  isPaid: boolean;
+  paymentId?: string;
 }
 
 interface ContractApi {
@@ -269,7 +323,21 @@ export type VoucherPayload = {
   description: string;
   partyName: string;
   partyPhone?: string;
-  category?: "SALARY" | "DAILY" | "GENERAL" | "VOUCHER" | "OWNER_WITHDRAWAL";
+  category?: "SALARY" | "DAILY" | "GENERAL" | "VOUCHER" | "OWNER_WITHDRAWAL" | "FREELANCE";
+};
+
+export type FreelancerPayload = {
+  name: string;
+  phone: string;
+  role: "PHOTOGRAPHER" | "EDITOR";
+};
+
+export type FreelanceWorkPayload = {
+  freelancerId: string;
+  description: string;
+  date: string;
+  price: number;
+  currency: Currency;
 };
 
 export type ContractPayload = {
@@ -375,5 +443,27 @@ function smsLogFromApi(a: SMSLogApi): SMSLog {
     status: a.status,
     timestamp: a.timestamp,
     error: a.error,
+  };
+}
+
+function freelancerFromApi(a: FreelancerApi): Freelancer {
+  return {
+    id: a.id,
+    name: a.name,
+    phone: a.phone,
+    role: a.role,
+  };
+}
+
+function freelanceWorkFromApi(a: FreelanceWorkApi): FreelanceWork {
+  return {
+    id: a.id,
+    freelancerId: a.freelancerId,
+    description: a.description,
+    date: a.date,
+    price: parseFloat(a.price),
+    currency: a.currency || "IQD",
+    isPaid: a.isPaid,
+    paymentId: a.paymentId,
   };
 }

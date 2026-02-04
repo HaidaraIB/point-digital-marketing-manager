@@ -15,6 +15,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, settings, us
     { id: 'quotations', label: 'عروض الأسعار', icon: '📝' },
     { id: 'vouchers', label: 'الوصولات', icon: '🧾' },
     { id: 'expenses', label: 'المصاريف والرواتب', icon: '💸' },
+    { id: 'freelance', label: 'حسابات الفري لانس', icon: '🎬' },
     { id: 'withdrawals', label: 'سحوبات المالك', icon: '🏦' },
     { id: 'contracts', label: 'العقود', icon: '🖋️' },
     { id: 'sms-logs', label: 'سجل الرسائل', icon: '💬' },

@@ -235,6 +235,8 @@ export const INITIAL_DATA: AppData = {
   quotations: [],
   vouchers: [],
   contracts: [],
+  freelancers: [],
+  freelanceWorks: [],
   smsLogs: [],
   users: [
     {

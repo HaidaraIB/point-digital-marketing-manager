@@ -49,6 +49,8 @@
           position: absolute !important;
           left: 0 !important;
           top: 0 !important;
+          margin: 0 !important;
+          padding: 0 !important;
           width: 210mm !important;
           min-width: 210mm !important;
           max-width: 210mm !important;
@@ -59,6 +61,21 @@
           page-break-inside: avoid;
           overflow: hidden !important;
           box-sizing: border-box !important;
+        }
+        /* الورقة تُوضَع نسبة لصفحة الطباعة (لا لحاوية ذات padding) */
+        #root * { position: static !important; }
+        .print-a4-sheet { position: absolute !important; }
+        #root { padding: 0 !important; margin: 0 !important; }
+        /* قسيمة الفري لانس: عرض أقل لظهور كامل مع هامش أبيض على اليمين (مثل المرجع) */
+        .print-freelance-sheet {
+          width: 190mm !important;
+          min-width: 190mm !important;
+          max-width: 190mm !important;
+          height: auto !important;
+          min-height: 148mm !important;
+          max-height: none !important;
+          padding: 15mm !important;
+          overflow: visible !important;
         }
         .print-a4-sheet:last-child {
           page-break-after: auto;
