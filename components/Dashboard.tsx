@@ -12,23 +12,24 @@ const Dashboard: React.FC<DashboardProps> = ({ data }) => {
   const [aiAnalysis, setAiAnalysis] = useState<string>("");
   const [loadingAi, setLoadingAi] = useState(false);
 
-  const convertToIQD = (amt: number, curr: Currency) => {
+  const convertToIQD = (amt: number, curr: Currency, rate?: number) => {
     if (curr === 'IQD' || !curr) return amt;
-    return amt * data.settings.exchangeRate;
+    const r = rate ?? data.settings.exchangeRate;
+    return amt * r;
   };
 
   const totals = useMemo(() => {
     const receiptsIQD = data.vouchers
       .filter(v => v.type === VoucherType.RECEIPT)
-      .reduce((sum, v) => sum + convertToIQD(v.amount, v.currency), 0);
+      .reduce((sum, v) => sum + convertToIQD(v.amount, v.currency, v.exchangeRate), 0);
 
     const allPaymentsIQD = data.vouchers
       .filter(v => v.type === VoucherType.PAYMENT)
-      .reduce((sum, v) => sum + convertToIQD(v.amount, v.currency), 0);
+      .reduce((sum, v) => sum + convertToIQD(v.amount, v.currency, v.exchangeRate), 0);
 
     const ownerWithdrawalsIQD = data.vouchers
       .filter(v => v.type === VoucherType.PAYMENT && v.category === 'OWNER_WITHDRAWAL')
-      .reduce((sum, v) => sum + convertToIQD(v.amount, v.currency), 0);
+      .reduce((sum, v) => sum + convertToIQD(v.amount, v.currency, v.exchangeRate), 0);
 
     const operatingExpensesIQD = allPaymentsIQD - ownerWithdrawalsIQD;
 

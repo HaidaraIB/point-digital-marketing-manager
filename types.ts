@@ -44,6 +44,8 @@ export interface Quotation {
   currency: Currency;
   status: QuotationStatus;
   note?: string;
+  /** سعر الصرف عند الإصدار — لا يتغير عند تحديث الإعدادات */
+  exchangeRate?: number;
 }
 
 export interface Voucher {
@@ -56,6 +58,8 @@ export interface Voucher {
   partyName: string; 
   partyPhone?: string;
   category?: 'SALARY' | 'DAILY' | 'GENERAL' | 'VOUCHER' | 'OWNER_WITHDRAWAL' | 'FREELANCE';
+  /** سعر الصرف عند الإصدار — لا يتغير عند تحديث الإعدادات */
+  exchangeRate?: number;
 }
 
 export interface Freelancer {

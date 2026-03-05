@@ -4,6 +4,8 @@ import { Quotation, AgencySettings, ServiceItem, QuotationStatus, SMSLog, Curren
 import { CURRENCY_SYMBOLS } from '../constants.tsx';
 import { sendSMS } from '../services/smsService.ts';
 import PhoneInput from './PhoneInput.tsx';
+import { QRCodeCanvas } from 'qrcode.react';
+import Barcode from 'react-barcode';
 
 interface Props {
   quotations: Quotation[];
@@ -34,9 +36,10 @@ const QuotationManager: React.FC<Props> = ({ quotations, settings, onAdd, onDele
     setPrice(0);
   };
 
-  const getEquivalentAmount = (amt: number, curr: Currency) => {
-    if (curr === 'IQD') return amt / settings.exchangeRate;
-    return amt * settings.exchangeRate;
+  const getEquivalentAmount = (amt: number, curr: Currency, rate?: number) => {
+    const r = rate ?? settings.exchangeRate;
+    if (curr === 'IQD') return amt / r;
+    return amt * r;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -56,6 +59,7 @@ const QuotationManager: React.FC<Props> = ({ quotations, settings, onAdd, onDele
       total,
       currency,
       status: QuotationStatus.PENDING,
+      exchangeRate: settings.exchangeRate,
     };
 
     const added = await onAdd(newQuotation);
@@ -82,7 +86,8 @@ const QuotationManager: React.FC<Props> = ({ quotations, settings, onAdd, onDele
   const handlePrint = () => window.print();
 
   if (selectedQuotation) {
-    const eqTotal = getEquivalentAmount(selectedQuotation.total, selectedQuotation.currency);
+    const rateUsed = selectedQuotation.exchangeRate ?? settings.exchangeRate;
+    const eqTotal = getEquivalentAmount(selectedQuotation.total, selectedQuotation.currency, rateUsed);
     const eqSymbol = selectedQuotation.currency === 'IQD' ? CURRENCY_SYMBOLS.USD : CURRENCY_SYMBOLS.IQD;
 
     return (
@@ -124,12 +129,20 @@ const QuotationManager: React.FC<Props> = ({ quotations, settings, onAdd, onDele
               </tr>
             </thead>
             <tbody>
-              {selectedQuotation.items.map((item) => (
-                <tr key={item.id} className="border-b border-gray-200">
-                  <td className="p-3 text-sm text-black font-bold">{item.description}</td>
-                  <td className="p-3 text-sm font-black text-left">{item.price.toLocaleString()}</td>
-                </tr>
-              ))}
+              {selectedQuotation.items.map((item) => {
+                const serviceInfo = settings.services.find(s => s.name === item.description);
+                return (
+                  <tr key={item.id} className="border-b border-gray-200">
+                    <td className="p-3">
+                      <p className="text-sm text-black font-bold">{item.description}</p>
+                      {serviceInfo?.description && (
+                        <p className="text-[10px] text-gray-500 mt-1 leading-relaxed">{serviceInfo.description}</p>
+                      )}
+                    </td>
+                    <td className="p-3 text-sm font-black text-left">{item.price.toLocaleString()}</td>
+                  </tr>
+                );
+              })}
             </tbody>
             <tfoot>
               <tr className="bg-gray-100">
@@ -139,7 +152,7 @@ const QuotationManager: React.FC<Props> = ({ quotations, settings, onAdd, onDele
               <tr className="bg-white">
                 <td colSpan={2} className="p-4 text-left font-bold text-gray-400 text-sm">
                   بما يعادل تقريباً: <span className="text-black">{eqTotal.toLocaleString(undefined, { maximumFractionDigits: 2 })} {eqSymbol}</span>
-                  <span className="text-[10px] block font-normal mt-1">(حسب سعر صرف الوكالة المعتمد: {settings.exchangeRate})</span>
+                  <span className="text-[10px] block font-normal mt-1">(حسب سعر صرف عند الإصدار: {rateUsed})</span>
                 </td>
               </tr>
             </tfoot>
@@ -157,6 +170,17 @@ const QuotationManager: React.FC<Props> = ({ quotations, settings, onAdd, onDele
           </div>
 
           <div className="grid grid-cols-2 gap-20 pt-10 border-t border-gray-200">
+            <div className="text-center flex flex-col items-center gap-4">
+              <div className="flex gap-4 items-center">
+                <div className="p-2 bg-white border border-gray-100 rounded-lg">
+                  <QRCodeCanvas value={`QUOTATION:${selectedQuotation.id}`} size={64} />
+                </div>
+                <div className="scale-75 origin-right">
+                  <Barcode value={selectedQuotation.id} height={30} width={1.2} fontSize={10} />
+                </div>
+              </div>
+              <p className="text-[10px] text-gray-400 font-mono">التحقق من صحة العرض</p>
+            </div>
             <div className="text-center">
               <p className="font-black text-black mb-10">توقيع وختم الوكالة</p>
               <div className="h-20 w-40 mx-auto border-2 border-dashed border-gray-100 rounded-2xl flex items-center justify-center">
@@ -250,7 +274,7 @@ const QuotationManager: React.FC<Props> = ({ quotations, settings, onAdd, onDele
                </td>
                <td className="p-4">
                  <p className="text-sm font-black text-purple-600">{q.total.toLocaleString()} {CURRENCY_SYMBOLS[q.currency]}</p>
-                 <p className="text-[9px] text-gray-400 font-bold">{getEquivalentAmount(q.total, q.currency).toLocaleString(undefined, {maximumFractionDigits:2})} {q.currency === 'IQD' ? '$' : 'د.ع'}</p>
+                 <p className="text-[9px] text-gray-400 font-bold">{getEquivalentAmount(q.total, q.currency, q.exchangeRate).toLocaleString(undefined, {maximumFractionDigits:2})} {q.currency === 'IQD' ? '$' : 'د.ع'}</p>
                </td>
                <td className="p-4 flex items-center justify-center gap-2">
                  <button onClick={() => setSelectedQuotation(q)} className="bg-purple-50 text-purple-600 px-3 py-1 rounded-lg text-[10px] font-black">🖨️ طباعة</button>

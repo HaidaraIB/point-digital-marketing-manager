@@ -147,6 +147,7 @@ const App: React.FC = () => {
           status: q.status,
           note: q.note,
           currency: q.currency,
+          exchangeRate: q.exchangeRate ?? data.settings.exchangeRate,
         };
         const created = await dataService.createQuotation(payload);
         if (created) {
@@ -192,6 +193,7 @@ const App: React.FC = () => {
           partyName: v.partyName,
           partyPhone: v.partyPhone,
           category: v.category,
+          exchangeRate: v.exchangeRate ?? data.settings.exchangeRate,
         };
         const created = await dataService.createVoucher(payload);
         if (created) {
@@ -313,6 +315,7 @@ const App: React.FC = () => {
           partyName: voucher.partyName,
           partyPhone: voucher.partyPhone,
           category: 'FREELANCE',
+          exchangeRate: voucher.exchangeRate ?? data.settings.exchangeRate,
         });
         if (created) {
           const ok = await dataService.markFreelanceWorksPaid(workIds, created.id);

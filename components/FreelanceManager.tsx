@@ -90,7 +90,8 @@ const FreelanceManager: React.FC<Props> = ({ freelancers, works, settings, onAdd
       date: new Date().toLocaleDateString('ar-IQ'),
       description: `تسوية مستحقات شهر ${selectedMonth} للمستقل: ${freelancer.name}`,
       partyName: freelancer.name,
-      category: 'FREELANCE'
+      category: 'FREELANCE',
+      exchangeRate: settings.exchangeRate,
     };
 
     onPayWork(settlementData.map(w => w.id), voucher);

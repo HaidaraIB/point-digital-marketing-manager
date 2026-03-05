@@ -18,6 +18,7 @@ import type {
   FreelanceWork,
 } from "../types.ts";
 import { apiGet, apiPost, apiPut, apiPatch, apiDelete } from "./api.ts";
+import { DEFAULT_SETTINGS as FALLBACK_SETTINGS } from "../constants.tsx";
 
 const PREFIX = "/api";
 
@@ -182,18 +183,6 @@ export async function clearSmsLogs(): Promise<void> {
 }
 
 // ----- Full app data -----
-const DEFAULT_SETTINGS: AgencySettings = {
-  name: "وكالة نقطة للتسويق الرقمي",
-  logo: "",
-  address: "",
-  phone: "",
-  email: "",
-  services: [],
-  quotationTerms: [],
-  twilio: { accountSid: "", authToken: "", fromNumber: "", senderName: "NOQTA", isEnabled: false },
-  exchangeRate: 1500,
-};
-
 export async function fetchAppData(): Promise<AppData | null> {
   const [quotations, vouchers, contracts, freelancers, freelanceWorks, users, settingsList, smsLogs] = await Promise.all([
     fetchQuotations(),
@@ -205,7 +194,7 @@ export async function fetchAppData(): Promise<AppData | null> {
     getList<AgencySettingsApi>(`${PREFIX}/settings/`),
     fetchSmsLogs(),
   ]);
-  const settings = settingsList[0] ? settingsFromApi(settingsList[0]) : DEFAULT_SETTINGS;
+  const settings = settingsList[0] ? settingsFromApi(settingsList[0]) : FALLBACK_SETTINGS;
   return {
     quotations,
     vouchers,
@@ -229,6 +218,7 @@ interface QuotationApi {
   currency: Currency;
   status: QuotationStatus;
   note?: string;
+  exchangeRate?: number;
 }
 
 interface VoucherApi {
@@ -241,6 +231,7 @@ interface VoucherApi {
   partyName: string;
   partyPhone?: string;
   category?: "SALARY" | "DAILY" | "GENERAL" | "VOUCHER" | "OWNER_WITHDRAWAL" | "FREELANCE";
+  exchangeRate?: number;
 }
 
 interface FreelancerApi {
@@ -313,6 +304,7 @@ export type QuotationPayload = {
   status?: QuotationStatus;
   note?: string;
   currency?: Currency;
+  exchangeRate?: number;
 };
 
 export type VoucherPayload = {
@@ -324,6 +316,7 @@ export type VoucherPayload = {
   partyName: string;
   partyPhone?: string;
   category?: "SALARY" | "DAILY" | "GENERAL" | "VOUCHER" | "OWNER_WITHDRAWAL" | "FREELANCE";
+  exchangeRate?: number;
 };
 
 export type FreelancerPayload = {
@@ -378,6 +371,7 @@ function quotationFromApi(a: QuotationApi): Quotation {
     currency: a.currency || "IQD",
     status: a.status,
     note: a.note,
+    exchangeRate: a.exchangeRate != null ? Number(a.exchangeRate) : undefined,
   };
 }
 
@@ -392,6 +386,7 @@ function voucherFromApi(a: VoucherApi): Voucher {
     partyName: a.partyName,
     partyPhone: a.partyPhone,
     category: a.category,
+    exchangeRate: a.exchangeRate != null ? Number(a.exchangeRate) : undefined,
   };
 }
 

@@ -33,9 +33,10 @@ const ExpenseManager: React.FC<Props> = ({ vouchers, settings, onAdd, onUpdate, 
     [vouchers]
   );
 
-  const getEquivalentAmount = (amt: number, curr: Currency) => {
-    if (curr === 'IQD') return amt / settings.exchangeRate;
-    return amt * settings.exchangeRate;
+  const getEquivalentAmount = (amt: number, curr: Currency, rate?: number) => {
+    const r = rate ?? settings.exchangeRate;
+    if (curr === 'IQD') return amt / r;
+    return amt * r;
   };
 
   const filteredReportData = useMemo(() => {
@@ -64,6 +65,7 @@ const ExpenseManager: React.FC<Props> = ({ vouchers, settings, onAdd, onUpdate, 
 
     const finalDescription = expenseType === 'SALARY' ? `راتب شهر: ${salaryMonth}` : description;
 
+    const existingV = editingId ? vouchers.find(v => v.id === editingId) : null;
     const voucherData: Voucher = {
       id: editingId || `EX-${Date.now().toString().slice(-6)}`,
       type: VoucherType.PAYMENT,
@@ -73,7 +75,8 @@ const ExpenseManager: React.FC<Props> = ({ vouchers, settings, onAdd, onUpdate, 
       partyPhone: expenseType === 'SALARY' ? partyPhone : '',
       description: finalDescription,
       date: new Date().toLocaleDateString('ar-IQ'),
-      category: expenseType
+      category: expenseType,
+      exchangeRate: existingV?.exchangeRate ?? settings.exchangeRate,
     };
 
     if (!editingId && expenseType === 'SALARY' && partyPhone && settings.twilio.isEnabled) {

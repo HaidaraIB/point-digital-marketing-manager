@@ -21,9 +21,10 @@ const OwnerWithdrawals: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete
     [vouchers]
   );
 
-  const getEquivalentAmount = (amt: number, curr: Currency) => {
-    if (curr === 'IQD') return amt / settings.exchangeRate;
-    return amt * settings.exchangeRate;
+  const getEquivalentAmount = (amt: number, curr: Currency, rate?: number) => {
+    const r = rate ?? settings.exchangeRate;
+    if (curr === 'IQD') return amt / r;
+    return amt * r;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -40,7 +41,8 @@ const OwnerWithdrawals: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete
       partyName: "مالك الوكالة",
       description,
       date: new Date().toLocaleDateString('ar-IQ'),
-      category: 'OWNER_WITHDRAWAL'
+      category: 'OWNER_WITHDRAWAL',
+      exchangeRate: settings.exchangeRate,
     };
 
     onAdd(newWithdrawal);
@@ -116,7 +118,7 @@ const OwnerWithdrawals: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete
                 <td className="p-4 text-xs font-bold text-gray-500">{w.date}</td>
                 <td className="p-4 text-sm font-bold text-gray-800">{w.description}</td>
                 <td className="p-4 text-sm font-black text-indigo-600">{w.amount.toLocaleString()} {CURRENCY_SYMBOLS[w.currency]}</td>
-                <td className="p-4 text-[10px] text-gray-400 font-bold">{getEquivalentAmount(w.amount, w.currency).toLocaleString(undefined, {maximumFractionDigits:2})} {w.currency === 'IQD' ? '$' : 'د.ع'}</td>
+                <td className="p-4 text-[10px] text-gray-400 font-bold">{getEquivalentAmount(w.amount, w.currency, w.exchangeRate).toLocaleString(undefined, {maximumFractionDigits:2})} {w.currency === 'IQD' ? '$' : 'د.ع'}</td>
                 <td className="p-4 text-center">
                   <button onClick={() => onDelete(w.id)} className="text-red-300 hover:text-red-500 transition-colors">🗑️</button>
                 </td>

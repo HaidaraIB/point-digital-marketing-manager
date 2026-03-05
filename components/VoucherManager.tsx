@@ -25,9 +25,10 @@ const VoucherManager: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete, 
   const [description, setDescription] = useState('');
   const [isSending, setIsSending] = useState(false);
 
-  const getEquivalentAmount = (amt: number, curr: Currency) => {
-    if (curr === 'IQD') return amt / settings.exchangeRate;
-    return amt * settings.exchangeRate;
+  const getEquivalentAmount = (amt: number, curr: Currency, rate?: number) => {
+    const r = rate ?? settings.exchangeRate;
+    if (curr === 'IQD') return amt / r;
+    return amt * r;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,7 +46,8 @@ const VoucherManager: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete, 
       partyPhone,
       description,
       date: new Date().toLocaleDateString('ar-IQ'),
-      category: 'VOUCHER'
+      category: 'VOUCHER',
+      exchangeRate: settings.exchangeRate,
     };
 
     const added = await onAdd(newVoucher);
@@ -73,7 +75,7 @@ const VoucherManager: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete, 
   const handlePrint = () => window.print();
 
   const renderVoucherContent = (voucher: Voucher, copyType: string) => {
-    const eqAmt = getEquivalentAmount(voucher.amount, voucher.currency);
+    const eqAmt = getEquivalentAmount(voucher.amount, voucher.currency, voucher.exchangeRate);
     const eqCurr = voucher.currency === 'IQD' ? 'USD' : 'IQD';
 
     return (
@@ -245,7 +247,7 @@ const VoucherManager: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete, 
           </thead>
           <tbody className="divide-y divide-gray-50">
             {vouchers.map(v => {
-              const eqAmt = getEquivalentAmount(v.amount, v.currency);
+              const eqAmt = getEquivalentAmount(v.amount, v.currency, v.exchangeRate);
               const eqCurr = v.currency === 'IQD' ? 'USD' : 'IQD';
               return (
                 <tr key={v.id} className="hover:bg-gray-50 transition-all">
