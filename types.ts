@@ -6,6 +6,7 @@ export enum VoucherType {
 
 export enum QuotationStatus {
   PENDING = 'PENDING',
+  SUBMITTED = 'SUBMITTED',
   ACCEPTED = 'ACCEPTED',
   REJECTED = 'REJECTED'
 }

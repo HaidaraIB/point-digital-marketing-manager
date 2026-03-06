@@ -271,14 +271,36 @@ const QuotationManager: React.FC<Props> = ({ quotations, settings, onAdd, onDele
                <td className="p-4">
                  <p className="text-sm font-bold text-gray-800">{q.clientName}</p>
                  <p className="text-[10px] text-gray-400 font-mono">{q.id}</p>
+                 <div className="flex gap-1 mt-1">
+                   <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold ${
+                     q.status === QuotationStatus.ACCEPTED ? 'bg-green-100 text-green-700' :
+                     q.status === QuotationStatus.REJECTED ? 'bg-red-100 text-red-700' :
+                     q.status === QuotationStatus.SUBMITTED ? 'bg-blue-100 text-blue-700' :
+                     'bg-gray-100 text-gray-700'
+                   }`}>
+                     {q.status === QuotationStatus.ACCEPTED ? 'موافق عليه' :
+                      q.status === QuotationStatus.REJECTED ? 'مرفوض' :
+                      q.status === QuotationStatus.SUBMITTED ? 'تم الإرسال' : 'معلق'}
+                   </span>
+                 </div>
                </td>
                <td className="p-4">
                  <p className="text-sm font-black text-purple-600">{q.total.toLocaleString()} {CURRENCY_SYMBOLS[q.currency]}</p>
                  <p className="text-[9px] text-gray-400 font-bold">{getEquivalentAmount(q.total, q.currency, q.exchangeRate).toLocaleString(undefined, {maximumFractionDigits:2})} {q.currency === 'IQD' ? '$' : 'د.ع'}</p>
                </td>
-               <td className="p-4 flex items-center justify-center gap-2">
-                 <button onClick={() => setSelectedQuotation(q)} className="bg-purple-50 text-purple-600 px-3 py-1 rounded-lg text-[10px] font-black">🖨️ طباعة</button>
-                 {canEdit && <button onClick={() => onDelete(q.id)} className="text-red-200">🗑️</button>}
+               <td className="p-4 flex flex-wrap items-center justify-center gap-1">
+                 <button onClick={() => setSelectedQuotation(q)} className="bg-purple-50 text-purple-600 px-2 py-1 rounded-lg text-[9px] font-black">🖨️ طباعة</button>
+                 {canEdit && (
+                   <>
+                     <div className="flex gap-1 border-r pr-1 border-gray-200">
+                       <button onClick={() => onStatusUpdate(q.id, QuotationStatus.PENDING)} className="bg-gray-50 text-gray-600 p-1 rounded hover:bg-gray-100" title="معلق">⏳</button>
+                       <button onClick={() => onStatusUpdate(q.id, QuotationStatus.SUBMITTED)} className="bg-blue-50 text-blue-600 p-1 rounded hover:bg-blue-100" title="تم الإرسال">📤</button>
+                       <button onClick={() => onStatusUpdate(q.id, QuotationStatus.ACCEPTED)} className="bg-green-50 text-green-600 p-1 rounded hover:bg-green-100" title="موافق عليه">✅</button>
+                       <button onClick={() => onStatusUpdate(q.id, QuotationStatus.REJECTED)} className="bg-red-50 text-red-600 p-1 rounded hover:bg-red-100" title="مرفوض">❌</button>
+                     </div>
+                     <button onClick={() => onDelete(q.id)} className="text-red-200 hover:text-red-400 p-1">🗑️</button>
+                   </>
+                 )}
                </td>
              </tr>)}
            </tbody>
