@@ -127,7 +127,7 @@ const ExpenseManager: React.FC<Props> = ({ vouchers, settings, onAdd, onUpdate, 
           <button onClick={() => setReportType('NONE')} className="bg-white text-gray-700 px-4 py-2 rounded-xl border border-gray-200 shadow-sm text-sm"><span>←</span> عودة</button>
           <button onClick={() => window.print()} className="bg-black text-white px-8 py-2 rounded-xl text-sm"><span>🖨️</span> طباعة التقرير</button>
         </div>
-        <div className="bg-white mx-auto p-[20mm] rounded-xl shadow-2xl" style={{ width: '210mm', minHeight: '297mm' }}>
+        <div className="print-content bg-white mx-auto p-[20mm] rounded-xl shadow-2xl" style={{ width: '210mm', minHeight: '297mm' }}>
            <h2 className="text-2xl font-black border-b-2 border-black pb-4 mb-6">تقرير المصاريف والرواتب - {reportType === 'WEEKLY' ? 'أسبوعي' : 'شهري'}</h2>
            <table className="w-full text-right border-collapse">
              <thead>

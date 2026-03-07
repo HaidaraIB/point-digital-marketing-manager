@@ -343,6 +343,41 @@ const App: React.FC = () => {
     }
   };
 
+  const handleUpdateFreelanceWork = async (w: FreelanceWork) => {
+    if (useApi) {
+      try {
+        const payload = {
+          freelancerId: w.freelancerId,
+          description: w.description,
+          date: w.date,
+          price: w.price,
+          currency: w.currency,
+          isPaid: w.isPaid,
+          paymentId: w.paymentId ?? '',
+        };
+        const updated = await dataService.updateFreelanceWork(w.id, payload);
+        if (updated) setData(prev => ({ ...prev, freelanceWorks: prev.freelanceWorks.map(x => x.id === w.id ? updated : x) }));
+      } catch (e) {
+        console.error(e);
+      }
+    } else {
+      syncUpdate(prev => ({ ...prev, freelanceWorks: prev.freelanceWorks.map(x => x.id === w.id ? w : x) }));
+    }
+  };
+
+  const handleDeleteFreelanceWork = async (id: string) => {
+    if (useApi) {
+      try {
+        const ok = await dataService.deleteFreelanceWork(id);
+        if (ok) setData(prev => ({ ...prev, freelanceWorks: prev.freelanceWorks.filter(w => w.id !== id) }));
+      } catch (e) {
+        console.error(e);
+      }
+    } else {
+      syncUpdate(prev => ({ ...prev, freelanceWorks: prev.freelanceWorks.filter(w => w.id !== id) }));
+    }
+  };
+
   const handleAddUser = async (u: User) => {
     if (useApi) {
       try {
@@ -491,6 +526,8 @@ const App: React.FC = () => {
             settings={data.settings}
             onAddFreelancer={handleAddFreelancer}
             onAddWork={handleAddFreelanceWork}
+            onUpdateWork={handleUpdateFreelanceWork}
+            onDeleteWork={handleDeleteFreelanceWork}
             onPayWork={handlePayFreelanceWork}
           />
         )}

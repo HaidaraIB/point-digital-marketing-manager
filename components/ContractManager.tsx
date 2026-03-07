@@ -86,17 +86,17 @@ const ContractManager: React.FC<Props> = ({ contracts, settings, onAdd, onDelete
           </button>
         </div>
 
-        <div className="bg-white mx-auto shadow-2xl print:shadow-none overflow-hidden rounded-xl print:rounded-none" 
+        <div className="print-content print-contract-one-page bg-white mx-auto shadow-2xl print:shadow-none overflow-hidden rounded-xl print:rounded-none print:p-[12mm]" 
              style={{ width: '210mm', minHeight: '297mm', padding: '25mm' }}>
           
           {/* Official Header */}
-          <div className="flex justify-between items-start border-b-4 border-gray-800 pb-6 mb-10">
+          <div className="flex justify-between items-start border-b-4 border-gray-800 pb-6 mb-10 print:pb-2 print:mb-3">
             <div className="text-right space-y-1">
-              <h2 className="text-xl font-black text-gray-900">{settings.name}</h2>
-              <p className="text-xs text-gray-500">للتسويق الرقمي والحلول المتكاملة</p>
+              <h2 className="text-xl font-black text-gray-900 print:text-base">{settings.name}</h2>
+              <p className="text-xs text-gray-500 print:text-[10px]">للتسويق الرقمي والحلول المتكاملة</p>
               <p className="text-[10px] text-gray-400">العراق - {settings.address}</p>
             </div>
-            <img src={settings.logo} alt="Logo" className="w-20 h-20 object-contain grayscale print:grayscale-0" />
+            <img src={settings.logo} alt="Logo" className="w-20 h-20 object-contain grayscale print:grayscale-0 print:w-12 print:h-12" />
             <div className="text-left text-[10px] font-bold text-gray-400 space-y-1" dir="ltr">
               <p>REF NO: {selectedContract.id}</p>
               <p>DATE: {selectedContract.date}</p>
@@ -104,17 +104,17 @@ const ContractManager: React.FC<Props> = ({ contracts, settings, onAdd, onDelete
             </div>
           </div>
 
-          <div className="text-center mb-10">
-            <h1 className="text-2xl font-black text-gray-900 underline underline-offset-8 decoration-2">عقد اتفاق تقديم خدمات تسويقية</h1>
+          <div className="text-center mb-10 print:mb-3">
+            <h1 className="text-2xl font-black text-gray-900 underline underline-offset-8 decoration-2 print:text-lg">عقد اتفاق تقديم خدمات تسويقية</h1>
           </div>
 
           {/* Legal Intro / Preamble */}
-          <div className="mb-10 leading-relaxed text-sm text-gray-800 space-y-6">
+          <div className="mb-10 leading-relaxed text-sm text-gray-800 space-y-6 print:mb-4 print:space-y-2 print:text-xs">
             <p className="text-justify font-bold">
               إنه في يوم الموافق {selectedContract.date}، تم إبرام هذا العقد والاتفاق عليه بين كل من:
             </p>
             
-            <div className="space-y-4 border-r-4 border-gray-100 pr-6">
+            <div className="space-y-4 border-r-4 border-gray-100 pr-6 print:space-y-1 print:pr-3">
               <div>
                 <span className="font-black text-gray-900">الطرف الأول:</span> {selectedContract.partyAName}، بصفته {selectedContract.partyATitle}، ويشار إليه في هذا العقد بـ (الوكالة).
               </div>
@@ -123,8 +123,8 @@ const ContractManager: React.FC<Props> = ({ contracts, settings, onAdd, onDelete
               </div>
             </div>
 
-            <div className="bg-gray-50 p-4 border border-gray-200 rounded-lg">
-              <p className="font-black text-gray-900 mb-1">التمهيد:</p>
+            <div className="bg-gray-50 p-4 border border-gray-200 rounded-lg print:p-2 print:rounded">
+              <p className="font-black text-gray-900 mb-1 print:mb-0.5">التمهيد:</p>
               <p className="text-xs text-gray-600 leading-relaxed">
                 حيث أن الطرف الأول وكالة متخصصة في تقديم الحلول الرقمية، وحيث رغب الطرف الثاني في الاستعانة بخبرات الطرف الأول لتنفيذ ( {selectedContract.subject} )، فقد التقت إرادة الطرفين على التعاقد وفقاً للمواد التالية:
               </p>
@@ -132,51 +132,50 @@ const ContractManager: React.FC<Props> = ({ contracts, settings, onAdd, onDelete
           </div>
 
           {/* Legal Articles */}
-          <div className="space-y-8 mb-16">
+          <div className="space-y-8 mb-16 print:space-y-2 print:mb-4">
             {selectedContract.clauses.map((clause, idx) => (
-              <div key={clause.id} className="space-y-2">
-                <h4 className="font-black text-gray-900 flex items-center gap-2">
-                  <span className="bg-gray-900 text-white w-8 h-8 rounded flex items-center justify-center text-xs">المادة {idx + 1}</span>
+              <div key={clause.id} className="space-y-2 print:space-y-0.5">
+                <h4 className="font-black text-gray-900 flex items-center gap-2 print:text-xs">
+                  <span className="bg-gray-900 text-white w-8 h-8 rounded flex items-center justify-center text-xs print:w-5 print:h-5 print:text-[10px]">المادة {idx + 1}</span>
                   <span>{clause.title}</span>
                 </h4>
-                <p className="text-sm text-gray-700 text-justify leading-relaxed pr-10">{clause.content}</p>
+                <p className="text-sm text-gray-700 text-justify leading-relaxed pr-10 print:text-[11px] print:pr-4 print:leading-snug">{clause.content}</p>
               </div>
             ))}
           </div>
 
           {/* Value Section */}
-          <div className="mb-20 p-5 bg-gray-50 border-2 border-gray-900 rounded-xl flex justify-between items-center">
-             <span className="font-black text-gray-900 text-sm uppercase">القيمة الإجمالية للعقد:</span>
-             {/* Fixed: Used CURRENCY_SYMBOLS with selectedContract.currency */}
-             <span className="text-2xl font-black text-gray-900">{selectedContract.totalValue.toLocaleString()} {CURRENCY_SYMBOLS[selectedContract.currency]}</span>
+          <div className="mb-20 p-5 bg-gray-50 border-2 border-gray-900 rounded-xl flex justify-between items-center print:mb-3 print:p-2 print:rounded">
+             <span className="font-black text-gray-900 text-sm uppercase print:text-xs">القيمة الإجمالية للعقد:</span>
+             <span className="text-2xl font-black text-gray-900 print:text-base">{selectedContract.totalValue.toLocaleString()} {CURRENCY_SYMBOLS[selectedContract.currency]}</span>
           </div>
 
           {/* Formal Signatures with Stamp Spaces */}
-          <div className="grid grid-cols-2 gap-12 pt-10">
-            <div className="space-y-12">
+          <div className="grid grid-cols-2 gap-12 pt-10 print:gap-6 print:pt-4">
+            <div className="space-y-12 print:space-y-2">
               <div className="text-center">
-                <p className="font-black text-gray-900 text-sm mb-4">توقيع وختم الطرف الأول (الوكالة)</p>
-                <div className="h-28 w-44 mx-auto border-2 border-dashed border-gray-200 rounded-2xl relative flex items-center justify-center">
-                  <span className="text-[10px] text-gray-300 font-bold uppercase tracking-widest">Official Stamp</span>
-                  <img src={settings.logo} className="absolute inset-0 m-auto w-16 opacity-10 grayscale" alt="watermark" />
+                <p className="font-black text-gray-900 text-sm mb-4 print:mb-1 print:text-xs">توقيع وختم الطرف الأول (الوكالة)</p>
+                <div className="h-28 w-44 mx-auto border-2 border-dashed border-gray-200 rounded-2xl relative flex items-center justify-center print:h-14 print:w-28 print:rounded-lg">
+                  <span className="text-[10px] text-gray-300 font-bold uppercase tracking-widest print:text-[8px]">Official Stamp</span>
+                  <img src={settings.logo} className="absolute inset-0 m-auto w-16 opacity-10 grayscale print:w-10" alt="watermark" />
                 </div>
               </div>
-              <p className="text-center font-bold text-xs">الاسم: .......................................</p>
+              <p className="text-center font-bold text-xs print:text-[10px]">الاسم: .......................................</p>
             </div>
             
-            <div className="space-y-12">
+            <div className="space-y-12 print:space-y-2">
               <div className="text-center">
-                <p className="font-black text-gray-900 text-sm mb-4">توقيع الطرف الثاني (العميل)</p>
-                <div className="h-28 w-44 mx-auto border-2 border-dashed border-gray-200 rounded-2xl flex items-center justify-center">
-                   <span className="text-[10px] text-gray-300 font-bold uppercase tracking-widest">Signature</span>
+                <p className="font-black text-gray-900 text-sm mb-4 print:mb-1 print:text-xs">توقيع الطرف الثاني (العميل)</p>
+                <div className="h-28 w-44 mx-auto border-2 border-dashed border-gray-200 rounded-2xl flex items-center justify-center print:h-14 print:w-28 print:rounded-lg">
+                   <span className="text-[10px] text-gray-300 font-bold uppercase tracking-widest print:text-[8px]">Signature</span>
                 </div>
               </div>
-              <p className="text-center font-bold text-xs">الاسم: .......................................</p>
+              <p className="text-center font-bold text-xs print:text-[10px]">الاسم: .......................................</p>
             </div>
           </div>
 
           {/* Footer Page Numbering */}
-          <div className="mt-20 text-center border-t pt-4 text-[10px] text-gray-400 font-bold">
+          <div className="mt-20 text-center border-t pt-4 text-[10px] text-gray-400 font-bold print:mt-4 print:pt-2">
             هذا العقد يتكون من (1) صفحة واحدة فقط وصدرت منه نسختان، نسخة لكل طرف.
           </div>
         </div>

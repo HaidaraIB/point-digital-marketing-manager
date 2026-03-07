@@ -10,13 +10,16 @@ interface Props {
   settings: AgencySettings;
   onAddFreelancer: (f: Freelancer) => void;
   onAddWork: (w: FreelanceWork) => void;
+  onUpdateWork: (w: FreelanceWork) => void;
+  onDeleteWork: (id: string) => void;
   onPayWork: (workIds: string[], voucher: Voucher) => void;
 }
 
-const FreelanceManager: React.FC<Props> = ({ freelancers, works, settings, onAddFreelancer, onAddWork, onPayWork }) => {
+const FreelanceManager: React.FC<Props> = ({ freelancers, works, settings, onAddFreelancer, onAddWork, onUpdateWork, onDeleteWork, onPayWork }) => {
   const [activeSubTab, setActiveSubTab] = useState<'LIST' | 'WORKS' | 'SETTLEMENT'>('LIST');
   const [showFreelancerForm, setShowFreelancerForm] = useState(false);
   const [showWorkForm, setShowWorkForm] = useState(false);
+  const [editingWork, setEditingWork] = useState<FreelanceWork | null>(null);
   const [selectedFreelancerId, setSelectedFreelancerId] = useState<string>('');
   const [selectedMonth, setSelectedMonth] = useState<string>(() => {
     const d = new Date();
@@ -35,6 +38,7 @@ const FreelanceManager: React.FC<Props> = ({ freelancers, works, settings, onAdd
   const [wPrice, setWPrice] = useState(0);
   const [wCurrency, setWCurrency] = useState<Currency>('IQD');
   const [wDate, setWDate] = useState(new Date().toISOString().split('T')[0]);
+  const [wIsPaid, setWIsPaid] = useState(false);
 
   // Selected for Printing Settlement
   const [printSettlement, setPrintSettlement] = useState<{ freelancer: Freelancer, works: FreelanceWork[], month: string } | null>(null);
@@ -52,19 +56,57 @@ const FreelanceManager: React.FC<Props> = ({ freelancers, works, settings, onAdd
   const handleAddWork = (e: React.FormEvent) => {
     e.preventDefault();
     if (!wFreelancerId || !wDesc || wPrice <= 0) return;
-    const newW: FreelanceWork = {
-      id: `WK-${Date.now().toString().slice(-6)}`,
-      freelancerId: wFreelancerId,
-      description: wDesc,
-      date: wDate,
-      price: wPrice,
-      currency: wCurrency,
-      isPaid: false
-    };
-    onAddWork(newW);
+    if (editingWork) {
+      onUpdateWork({
+        ...editingWork,
+        freelancerId: wFreelancerId,
+        description: wDesc,
+        date: wDate,
+        price: wPrice,
+        currency: wCurrency,
+        isPaid: wIsPaid,
+        paymentId: wIsPaid ? (editingWork.paymentId ?? '') : '',
+      });
+      setEditingWork(null);
+    } else {
+      const newW: FreelanceWork = {
+        id: `WK-${Date.now().toString().slice(-6)}`,
+        freelancerId: wFreelancerId,
+        description: wDesc,
+        date: wDate,
+        price: wPrice,
+        currency: wCurrency,
+        isPaid: false
+      };
+      onAddWork(newW);
+    }
     setWDesc('');
     setWPrice(0);
     setShowWorkForm(false);
+  };
+
+  const handleStartEdit = (w: FreelanceWork) => {
+    setEditingWork(w);
+    setWFreelancerId(w.freelancerId);
+    setWDesc(w.description);
+    setWDate(w.date);
+    setWPrice(w.price);
+    setWCurrency(w.currency);
+    setWIsPaid(w.isPaid);
+    setShowWorkForm(true);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingWork(null);
+    setWDesc('');
+    setWPrice(0);
+    setWIsPaid(false);
+    setShowWorkForm(false);
+  };
+
+  const handleDelete = (w: FreelanceWork) => {
+    const msg = w.isPaid ? 'هذا العمل تم صرفه. هل تريد الحذف على أي حال؟' : 'هل أنت متأكد من حذف هذا العمل؟';
+    if (window.confirm(msg)) onDeleteWork(w.id);
   };
 
   const settlementData = useMemo(() => {
@@ -220,11 +262,25 @@ const FreelanceManager: React.FC<Props> = ({ freelancers, works, settings, onAdd
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <h3 className="font-bold text-gray-800">إدخال قطع العمل المنفذة</h3>
-            <button onClick={() => setShowWorkForm(!showWorkForm)} className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-bold">إضافة عمل جديد +</button>
+            <button
+              onClick={() => {
+                setEditingWork(null);
+                setWFreelancerId('');
+                setWDesc('');
+                setWPrice(0);
+                setWDate(new Date().toISOString().split('T')[0]);
+                setWCurrency('IQD');
+                setShowWorkForm(!showWorkForm);
+              }}
+              className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-bold"
+            >
+              إضافة عمل جديد +
+            </button>
           </div>
 
           {showWorkForm && (
             <form onSubmit={handleAddWork} className="bg-white p-6 rounded-3xl border shadow-xl space-y-4 animate-fade-in">
+              <h4 className="font-bold text-gray-700">{editingWork ? 'تعديل العمل' : 'إضافة عمل جديد'}</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <select value={wFreelancerId} onChange={e=>setWFreelancerId(e.target.value)} className={inputClass} required>
                   <option value="">اختر الشخص المنفذ...</option>
@@ -240,7 +296,19 @@ const FreelanceManager: React.FC<Props> = ({ freelancers, works, settings, onAdd
                   <option value="USD">USD (دولار)</option>
                 </select>
               </div>
-              <button type="submit" className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold">تسجيل العمل في السجل</button>
+              {editingWork && (
+                <div className="flex items-center gap-2">
+                  <label className="font-bold text-gray-700">الحالة:</label>
+                  <select value={wIsPaid ? 'paid' : 'pending'} onChange={e=>setWIsPaid(e.target.value === 'paid')} className={inputClass}>
+                    <option value="pending">بانتظار التحاسب</option>
+                    <option value="paid">تم الصرف</option>
+                  </select>
+                </div>
+              )}
+              <div className="flex gap-2">
+                <button type="submit" className="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-bold">{editingWork ? 'حفظ التعديلات' : 'تسجيل العمل في السجل'}</button>
+                {editingWork && <button type="button" onClick={handleCancelEdit} className="px-4 py-3 bg-gray-200 text-gray-700 rounded-xl font-bold">إلغاء</button>}
+              </div>
             </form>
           )}
 
@@ -253,6 +321,7 @@ const FreelanceManager: React.FC<Props> = ({ freelancers, works, settings, onAdd
                   <th className="p-4">الوصف</th>
                   <th className="p-4">المبلغ</th>
                   <th className="p-4">الحالة</th>
+                  <th className="p-4 text-center">إجراءات</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 font-bold">
@@ -264,6 +333,16 @@ const FreelanceManager: React.FC<Props> = ({ freelancers, works, settings, onAdd
                     <td className="p-4">{w.price.toLocaleString()} {CURRENCY_SYMBOLS[w.currency]}</td>
                     <td className="p-4">
                       {w.isPaid ? <span className="text-green-500">✓ تم الصرف</span> : <span className="text-orange-400">⏳ بانتظار التحاسب</span>}
+                    </td>
+                    <td className="p-4">
+                      <div className="flex gap-2 justify-center">
+                        <button type="button" onClick={() => handleStartEdit(w)} className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="تعديل">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                        </button>
+                        <button type="button" onClick={() => handleDelete(w)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="حذف">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

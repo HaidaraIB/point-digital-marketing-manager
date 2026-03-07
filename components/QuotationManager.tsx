@@ -101,7 +101,7 @@ const QuotationManager: React.FC<Props> = ({ quotations, settings, onAdd, onDele
           </button>
         </div>
 
-        <div className="bg-white mx-auto shadow-2xl print:shadow-none p-[20mm] rounded-xl print:rounded-none" style={{ width: '210mm', minHeight: '297mm' }}>
+        <div className="print-content bg-white mx-auto shadow-2xl print:shadow-none p-[20mm] rounded-xl print:rounded-none" style={{ width: '210mm', minHeight: '297mm' }}>
           <div className="flex justify-between items-start border-b-2 border-black pb-6 mb-8">
             <div className="text-right">
               <h1 className="text-2xl font-black text-black">{settings.name}</h1>

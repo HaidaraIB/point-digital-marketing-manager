@@ -128,6 +128,16 @@ export async function markFreelanceWorksPaid(workIds: string[], voucherId: strin
   return ok;
 }
 
+export async function updateFreelanceWork(id: string, payload: Partial<FreelanceWorkUpdatePayload>): Promise<FreelanceWork | null> {
+  const { data, ok } = await apiPut<FreelanceWorkApi>(`${PREFIX}/freelance-works/${id}/`, payload);
+  return ok && data ? freelanceWorkFromApi(data) : null;
+}
+
+export async function deleteFreelanceWork(id: string): Promise<boolean> {
+  const { ok } = await apiDelete(`${PREFIX}/freelance-works/${id}/`);
+  return ok;
+}
+
 // ----- Users -----
 export async function fetchUsers(): Promise<User[]> {
   const list = await getList<UserApi>(`${PREFIX}/users/`);
@@ -331,6 +341,11 @@ export type FreelanceWorkPayload = {
   date: string;
   price: number;
   currency: Currency;
+};
+
+export type FreelanceWorkUpdatePayload = FreelanceWorkPayload & {
+  isPaid?: boolean;
+  paymentId?: string;
 };
 
 export type ContractPayload = {
