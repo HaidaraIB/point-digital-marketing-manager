@@ -82,6 +82,8 @@ const VoucherManager: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete, 
   const renderVoucherContent = (voucher: Voucher, copyType: string) => {
     const eqAmt = getEquivalentAmount(voucher.amount, voucher.currency, voucher.exchangeRate);
     const eqCurr = voucher.currency === 'IQD' ? 'USD' : 'IQD';
+    const signerLineLabel =
+      voucher.type === VoucherType.RECEIPT ? 'توقيع المستلم' : 'توقيع المحاسب';
 
     return (
       <div className="voucher-content relative bg-white p-[10mm] border-[6px] border-double border-gray-300 h-[148.5mm] flex flex-col justify-between overflow-hidden">
@@ -142,7 +144,7 @@ const VoucherManager: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete, 
 
         <div className="grid grid-cols-2 gap-10 pt-8 mt-4 border-t-2 border-gray-100">
           <div className="text-center">
-            <p className="font-black text-[11px] text-black mb-6">توقيع المدير</p>
+            <p className="font-black text-[11px] text-black mb-6">{signerLineLabel}</p>
             <div className="border-b border-gray-200 w-full h-6"></div>
           </div>
           <div className="text-center">
