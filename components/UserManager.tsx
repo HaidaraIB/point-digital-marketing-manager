@@ -1,6 +1,8 @@
 
 import React, { useState } from 'react';
 import { User, UserRole } from '../types.ts';
+import ConfirmDialog from './ConfirmDialog.tsx';
+import { DeleteIcon } from './ActionIcons.tsx';
 
 interface Props {
   users: User[];
@@ -15,6 +17,7 @@ const UserManager: React.FC<Props> = ({ users, onAdd, onDelete, canEdit = true }
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<UserRole>(UserRole.ACCOUNTANT);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,11 +123,12 @@ const UserManager: React.FC<Props> = ({ users, onAdd, onDelete, canEdit = true }
               </div>
               {canEdit && (
               <button 
-                onClick={() => onDelete(user.id)}
-                className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                onClick={() => setPendingDeleteId(user.id)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-red-100 bg-red-50 text-red-400 opacity-0 transition-all group-hover:opacity-100 hover:border-red-300 hover:bg-red-100 hover:text-red-600"
                 title="حذف المستخدم"
+                aria-label="حذف المستخدم"
               >
-                🗑️
+                <DeleteIcon />
               </button>
             )}
             </div>
@@ -147,6 +151,18 @@ const UserManager: React.FC<Props> = ({ users, onAdd, onDelete, canEdit = true }
            لا يوجد مستخدمون مضافون حالياً.
         </div>
       )}
+      <ConfirmDialog
+        isOpen={!!pendingDeleteId}
+        title="تاكيد حذف المستخدم"
+        message="هل تريد حذف هذا المستخدم من النظام؟"
+        confirmText="حذف"
+        cancelText="الغاء"
+        onConfirm={() => {
+          if (pendingDeleteId) onDelete(pendingDeleteId);
+          setPendingDeleteId(null);
+        }}
+        onCancel={() => setPendingDeleteId(null)}
+      />
     </div>
   );
 };

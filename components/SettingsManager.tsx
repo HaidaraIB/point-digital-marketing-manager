@@ -1,6 +1,8 @@
 
 import React, { useState, useRef } from 'react';
 import { AgencySettings } from '../types.ts';
+import StatusDialog from './StatusDialog.tsx';
+import { DeleteIcon } from './ActionIcons.tsx';
 
 interface Props {
   settings: AgencySettings;
@@ -9,6 +11,7 @@ interface Props {
 
 const SettingsManager: React.FC<Props> = ({ settings, onUpdate }) => {
   const [formData, setFormData] = useState<AgencySettings>(settings);
+  const [statusDialog, setStatusDialog] = useState<{ type: 'success' | 'error'; title: string; message: string } | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -71,8 +74,20 @@ const SettingsManager: React.FC<Props> = ({ settings, onUpdate }) => {
   };
 
   const save = () => {
-    onUpdate(formData);
-    alert('تم حفظ كافة الإعدادات بنجاح!');
+    try {
+      onUpdate(formData);
+      setStatusDialog({
+        type: 'success',
+        title: 'تم الحفظ بنجاح',
+        message: 'تم حفظ كافة الإعدادات بنجاح.',
+      });
+    } catch {
+      setStatusDialog({
+        type: 'error',
+        title: 'فشل الحفظ',
+        message: 'تعذر حفظ الإعدادات حالياً. حاول مرة أخرى.',
+      });
+    }
   };
 
   const inputClass = "w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 focus:bg-white outline-none text-sm transition-all duration-300";
@@ -185,7 +200,14 @@ const SettingsManager: React.FC<Props> = ({ settings, onUpdate }) => {
                     onChange={(e) => updateTerm(index, e.target.value)}
                     className={`${inputClass} !p-2 min-h-[60px]`}
                   />
-                  <button onClick={() => removeTerm(index)} className="mt-2 text-red-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">🗑️</button>
+                  <button
+                    onClick={() => removeTerm(index)}
+                    className="mt-2 inline-flex h-8 w-8 items-center justify-center rounded-full border border-red-100 bg-red-50 text-red-400 opacity-0 transition-all group-hover:opacity-100 hover:border-red-300 hover:bg-red-100 hover:text-red-600"
+                    title="حذف"
+                    aria-label="حذف"
+                  >
+                    <DeleteIcon />
+                  </button>
                 </div>
               ))}
             </div>
@@ -263,6 +285,13 @@ const SettingsManager: React.FC<Props> = ({ settings, onUpdate }) => {
           </div>
         </div>
       </div>
+      <StatusDialog
+        isOpen={!!statusDialog}
+        type={statusDialog?.type ?? 'success'}
+        title={statusDialog?.title ?? ''}
+        message={statusDialog?.message ?? ''}
+        onClose={() => setStatusDialog(null)}
+      />
     </div>
   );
 };

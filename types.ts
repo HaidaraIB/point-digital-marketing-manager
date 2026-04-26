@@ -30,6 +30,7 @@ export interface User {
 export interface ServiceItem {
   id: string;
   description: string;
+  details?: string;
   price: number;
   quantity: number;
   currency?: Currency;
@@ -130,9 +131,15 @@ export interface SMSLog {
   error?: string;
 }
 
+export interface MonthlyOpeningBalance {
+  yearMonth: string;
+  openingIqd: number;
+}
+
 export interface AppData {
   quotations: Quotation[];
   vouchers: Voucher[];
+  monthlyOpeningBalances: MonthlyOpeningBalance[];
   contracts: Contract[];
   freelancers: Freelancer[];
   freelanceWorks: FreelanceWork[];

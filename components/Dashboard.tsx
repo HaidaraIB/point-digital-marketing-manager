@@ -93,6 +93,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data }) => {
   }, [data.vouchers, selectedMonth]);
 
   const totals = useMemo(() => {
+    const openingBalanceIQD = data.monthlyOpeningBalances.find(m => m.yearMonth === selectedMonth)?.openingIqd ?? 0;
     const receiptsIQD = vouchersForMonth
       .filter(v => v.type === VoucherType.RECEIPT)
       .reduce((sum, v) => sum + convertToIQD(v.amount, v.currency, v.exchangeRate), 0);
@@ -108,12 +109,13 @@ const Dashboard: React.FC<DashboardProps> = ({ data }) => {
     const operatingExpensesIQD = allPaymentsIQD - ownerWithdrawalsIQD;
 
     return {
+      openingBalance: openingBalanceIQD,
       receipts: receiptsIQD,
       operatingExpenses: operatingExpensesIQD,
       ownerWithdrawals: ownerWithdrawalsIQD,
-      balance: receiptsIQD - allPaymentsIQD
+      balance: openingBalanceIQD + receiptsIQD - allPaymentsIQD
     };
-  }, [data.settings.exchangeRate, vouchersForMonth]);
+  }, [data.monthlyOpeningBalances, data.settings.exchangeRate, selectedMonth, vouchersForMonth]);
 
   const handleAiAnalysis = async () => {
     setLoadingAi(true);
@@ -181,7 +183,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data }) => {
         </div>
       </div>
       {/* شبكة البطاقات المستجيبة: 1 في الموبايل، 2 في التابلت، 4 في الديسكتوب */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
           <p className="text-gray-500 text-sm mb-1 font-medium">إجمالي المقبوضات</p>
           <h3 className="text-2xl font-black text-green-600 tracking-tight group-hover:scale-105 transition-transform">{totals.receipts.toLocaleString()} <span className="text-xs font-bold opacity-70">د.ع</span></h3>
@@ -196,6 +198,11 @@ const Dashboard: React.FC<DashboardProps> = ({ data }) => {
           <p className="text-gray-500 text-sm mb-1 font-medium">سحوبات المالك</p>
           <h3 className="text-2xl font-black text-indigo-600 tracking-tight group-hover:scale-105 transition-transform">{totals.ownerWithdrawals.toLocaleString()} <span className="text-xs font-bold opacity-70">د.ع</span></h3>
           <p className="text-[10px] text-gray-400 mt-1 font-bold">≈ {(totals.ownerWithdrawals / data.settings.exchangeRate).toLocaleString(undefined, { maximumFractionDigits: 0 })} $</p>
+        </div>
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
+          <p className="text-gray-500 text-sm mb-1 font-medium">الرصيد الافتتاحي</p>
+          <h3 className="text-2xl font-black text-slate-600 tracking-tight group-hover:scale-105 transition-transform">{totals.openingBalance.toLocaleString()} <span className="text-xs font-bold opacity-70">د.ع</span></h3>
+          <p className="text-[10px] text-gray-400 mt-1 font-bold">≈ {(totals.openingBalance / data.settings.exchangeRate).toLocaleString(undefined, { maximumFractionDigits: 0 })} $</p>
         </div>
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
           <p className="text-gray-500 text-sm mb-1 font-medium">الرصيد المتاح</p>

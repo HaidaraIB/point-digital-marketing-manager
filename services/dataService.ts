@@ -16,6 +16,7 @@ import type {
   Currency,
   Freelancer,
   FreelanceWork,
+  MonthlyOpeningBalance,
 } from "../types.ts";
 import { apiGet, apiPost, apiPut, apiPatch, apiDelete } from "./api.ts";
 import { DEFAULT_SETTINGS as FALLBACK_SETTINGS } from "../constants.tsx";
@@ -65,6 +66,14 @@ export async function deleteQuotation(id: string): Promise<boolean> {
 export async function fetchVouchers(): Promise<Voucher[]> {
   const list = await getList<VoucherApi>(`${PREFIX}/vouchers/`);
   return list.map(voucherFromApi);
+}
+
+export async function fetchMonthlyOpeningBalances(): Promise<MonthlyOpeningBalance[]> {
+  const list = await getList<MonthlyOpeningBalanceApi>(`${PREFIX}/monthly-opening-balances/`);
+  return list.map((m) => ({
+    yearMonth: m.yearMonth,
+    openingIqd: Number(m.openingIqd),
+  }));
 }
 
 export async function createVoucher(payload: VoucherPayload): Promise<Voucher | null> {
@@ -194,9 +203,10 @@ export async function clearSmsLogs(): Promise<void> {
 
 // ----- Full app data -----
 export async function fetchAppData(): Promise<AppData | null> {
-  const [quotations, vouchers, contracts, freelancers, freelanceWorks, users, settingsList, smsLogs] = await Promise.all([
+  const [quotations, vouchers, monthlyOpeningBalances, contracts, freelancers, freelanceWorks, users, settingsList, smsLogs] = await Promise.all([
     fetchQuotations(),
     fetchVouchers(),
+    fetchMonthlyOpeningBalances(),
     fetchContracts(),
     fetchFreelancers(),
     fetchFreelanceWorks(),
@@ -208,6 +218,7 @@ export async function fetchAppData(): Promise<AppData | null> {
   return {
     quotations,
     vouchers,
+    monthlyOpeningBalances,
     contracts,
     freelancers,
     freelanceWorks,
@@ -223,7 +234,7 @@ interface QuotationApi {
   clientName: string;
   clientPhone?: string;
   date: string;
-  items: { id: string; description: string; price: string; quantity: number; currency?: string }[];
+  items: { id: string; description: string; details?: string; price: string; quantity: number; currency?: string }[];
   total: string;
   currency: Currency;
   status: QuotationStatus;
@@ -242,6 +253,11 @@ interface VoucherApi {
   partyPhone?: string;
   category?: "SALARY" | "DAILY" | "GENERAL" | "VOUCHER" | "OWNER_WITHDRAWAL" | "FREELANCE";
   exchangeRate?: number;
+}
+
+interface MonthlyOpeningBalanceApi {
+  yearMonth: string;
+  openingIqd: number;
 }
 
 interface FreelancerApi {
@@ -310,7 +326,7 @@ export type QuotationPayload = {
   clientName: string;
   clientPhone?: string;
   date: string;
-  items: { description: string; price: number; quantity: number; currency?: Currency }[];
+  items: { description: string; details?: string; price: number; quantity: number; currency?: Currency }[];
   status?: QuotationStatus;
   note?: string;
   currency?: Currency;
@@ -378,6 +394,7 @@ function quotationFromApi(a: QuotationApi): Quotation {
     items: a.items.map((i) => ({
       id: i.id,
       description: i.description,
+      details: i.details || "",
       price: parseFloat(i.price),
       quantity: i.quantity,
       currency: (i.currency as Currency) || "IQD",

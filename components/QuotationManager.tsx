@@ -4,8 +4,10 @@ import { Quotation, AgencySettings, ServiceItem, QuotationStatus, SMSLog, Curren
 import { CURRENCY_SYMBOLS } from '../constants.tsx';
 import { sendSMS } from '../services/smsService.ts';
 import PhoneInput from './PhoneInput.tsx';
+import ConfirmDialog from './ConfirmDialog.tsx';
 import { QRCodeCanvas } from 'qrcode.react';
 import Barcode from 'react-barcode';
+import { DeleteIcon } from './ActionIcons.tsx';
 
 interface Props {
   quotations: Quotation[];
@@ -17,6 +19,31 @@ interface Props {
   canEdit?: boolean;
 }
 
+const PrintIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M6 9V4h12v5" />
+    <rect x="6" y="14" width="12" height="6" rx="1" />
+    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+  </svg>
+);
+
+const StatusIcon = ({ label }: { label: string }) => (
+  <span className="text-xs font-black leading-none">{label}</span>
+);
+
+const getStatusMeta = (status: QuotationStatus) => {
+  if (status === QuotationStatus.ACCEPTED) {
+    return { label: 'موافق عليه', className: 'bg-green-100 text-green-700 border-green-200' };
+  }
+  if (status === QuotationStatus.REJECTED) {
+    return { label: 'مرفوض', className: 'bg-red-100 text-red-700 border-red-200' };
+  }
+  if (status === QuotationStatus.SUBMITTED) {
+    return { label: 'تم الإرسال', className: 'bg-blue-100 text-blue-700 border-blue-200' };
+  }
+  return { label: 'معلق', className: 'bg-gray-100 text-gray-700 border-gray-200' };
+};
+
 const QuotationManager: React.FC<Props> = ({ quotations, settings, onAdd, onDelete, onStatusUpdate, onSMSLog, canEdit = true }) => {
   const [showForm, setShowForm] = useState(false);
   const [selectedQuotation, setSelectedQuotation] = useState<Quotation | null>(null);
@@ -25,14 +52,19 @@ const QuotationManager: React.FC<Props> = ({ quotations, settings, onAdd, onDele
   const [currency, setCurrency] = useState<Currency>('IQD');
   const [items, setItems] = useState<ServiceItem[]>([]);
   const [selectedServiceName, setSelectedServiceName] = useState('');
+  const [serviceDetails, setServiceDetails] = useState('');
+  const [quantity, setQuantity] = useState(1);
   const [price, setPrice] = useState(0);
   const [isSending, setIsSending] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const addItem = () => {
     if (!selectedServiceName || price <= 0) return;
-    const newItem: ServiceItem = { id: Date.now().toString(), description: selectedServiceName, price, quantity: 1, currency };
+    const newItem: ServiceItem = { id: Date.now().toString(), description: selectedServiceName, details: serviceDetails, price, quantity, currency };
     setItems([...items, newItem]);
     setSelectedServiceName('');
+    setServiceDetails('');
+    setQuantity(1);
     setPrice(0);
   };
 
@@ -48,7 +80,7 @@ const QuotationManager: React.FC<Props> = ({ quotations, settings, onAdd, onDele
 
     setIsSending(true);
 
-    const total = items.reduce((sum, item) => sum + item.price, 0);
+    const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
     const newQuotation: Quotation = {
       id: `QT-${Date.now().toString().slice(-6)}`,
@@ -124,8 +156,10 @@ const QuotationManager: React.FC<Props> = ({ quotations, settings, onAdd, onDele
           <table className="w-full mb-10 border-collapse">
             <thead>
               <tr className="bg-black text-white">
-                <th className="p-3 text-right text-sm">تفاصيل الخدمة</th>
-                <th className="p-3 text-left text-sm">السعر ({CURRENCY_SYMBOLS[selectedQuotation.currency]})</th>
+                <th className="p-3 text-center text-sm">تفاصيل الخدمة</th>
+                <th className="p-3 text-center text-sm">العدد</th>
+                <th className="p-3 text-center text-sm">سعر الوحدة ({CURRENCY_SYMBOLS[selectedQuotation.currency]})</th>
+                <th className="p-3 text-center text-sm">الإجمالي</th>
               </tr>
             </thead>
             <tbody>
@@ -135,22 +169,24 @@ const QuotationManager: React.FC<Props> = ({ quotations, settings, onAdd, onDele
                   <tr key={item.id} className="border-b border-gray-200">
                     <td className="p-3">
                       <p className="text-sm text-black font-bold">{item.description}</p>
-                      {serviceInfo?.description && (
-                        <p className="text-[10px] text-gray-500 mt-1 leading-relaxed">{serviceInfo.description}</p>
+                      {(item.details || serviceInfo?.description) && (
+                        <p className="text-[10px] text-gray-500 mt-1 leading-relaxed">{item.details || serviceInfo?.description}</p>
                       )}
                     </td>
-                    <td className="p-3 text-sm font-black text-left">{item.price.toLocaleString()}</td>
+                    <td className="p-3 text-sm font-black text-center">{item.quantity}</td>
+                    <td className="p-3 text-sm font-black text-center">{item.price.toLocaleString()}</td>
+                    <td className="p-3 text-sm font-black text-center">{(item.price * item.quantity).toLocaleString()}</td>
                   </tr>
                 );
               })}
             </tbody>
             <tfoot>
               <tr className="bg-gray-100">
-                <td className="p-4 text-right font-black text-black text-lg">الإجمالي الكلي</td>
-                <td className="p-4 text-left font-black text-black text-xl">{selectedQuotation.total.toLocaleString()} {CURRENCY_SYMBOLS[selectedQuotation.currency]}</td>
+                <td colSpan={3} className="p-4 text-center font-black text-black text-lg">الإجمالي الكلي</td>
+                <td className="p-4 text-center font-black text-black text-xl">{selectedQuotation.total.toLocaleString()} {CURRENCY_SYMBOLS[selectedQuotation.currency]}</td>
               </tr>
               <tr className="bg-white">
-                <td colSpan={2} className="p-4 text-left font-bold text-gray-400 text-sm">
+                <td colSpan={4} className="p-4 text-center font-bold text-gray-400 text-sm">
                   بما يعادل تقريباً: <span className="text-black">{eqTotal.toLocaleString(undefined, { maximumFractionDigits: 2 })} {eqSymbol}</span>
                   <span className="text-[10px] block font-normal mt-1">(حسب سعر صرف عند الإصدار: {rateUsed})</span>
                 </td>
@@ -236,15 +272,25 @@ const QuotationManager: React.FC<Props> = ({ quotations, settings, onAdd, onDele
                 <input type="number" value={price === 0 ? '' : price} onChange={(e)=>setPrice(Number(e.target.value))} className={`${inputClass} pr-8`} placeholder="السعر" />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">{CURRENCY_SYMBOLS[currency]}</span>
               </div>
+              <input type="number" value={quantity} min={1} onChange={(e)=>setQuantity(Math.max(1, Number(e.target.value) || 1))} className={`${inputClass} w-full md:w-24`} placeholder="العدد" />
               <button type="button" onClick={addItem} className="bg-gray-900 text-white px-6 py-2 rounded-xl font-bold text-xs w-full md:w-auto">إضافة</button>
             </div>
+            <textarea value={serviceDetails} onChange={(e)=>setServiceDetails(e.target.value)} className={inputClass} placeholder="تفاصيل الخدمة..." rows={2} />
             <div className="space-y-1">
               {items.map(item => (
                 <div key={item.id} className="text-xs font-bold text-gray-600 bg-white p-2.5 border rounded-xl flex justify-between shadow-sm">
-                  <span>{item.description}</span>
+                  <span>{item.description} {item.details ? `- ${item.details}` : ''}</span>
                   <div className="flex items-center gap-4">
-                    <span>{item.price.toLocaleString()} {CURRENCY_SYMBOLS[currency]}</span>
-                    <button type="button" onClick={() => setItems(items.filter(i => i.id !== item.id))} className="text-red-300">🗑️</button>
+                    <span>{item.quantity} × {item.price.toLocaleString()} = {(item.price * item.quantity).toLocaleString()} {CURRENCY_SYMBOLS[currency]}</span>
+                    <button
+                      type="button"
+                      onClick={() => setItems(items.filter(i => i.id !== item.id))}
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-red-100 bg-red-50 text-red-400 transition-all hover:border-red-300 hover:bg-red-100 hover:text-red-600"
+                      title="حذف"
+                      aria-label="حذف"
+                    >
+                      <DeleteIcon className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                 </div>
               ))}
@@ -258,54 +304,107 @@ const QuotationManager: React.FC<Props> = ({ quotations, settings, onAdd, onDele
       )}
 
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden no-print">
-         <table className="w-full text-right">
+         <table className="w-full text-center">
            <thead className="bg-gray-50 border-b">
-             <tr className="text-right">
+             <tr className="text-center">
                <th className="p-4 text-xs font-black text-gray-400">العميل</th>
                <th className="p-4 text-xs font-black text-gray-400">الإجمالي</th>
+               <th className="p-4 text-xs font-black text-gray-400">الحالة</th>
                <th className="p-4 text-xs font-black text-gray-400 text-center">إجراءات</th>
              </tr>
            </thead>
            <tbody className="divide-y divide-gray-50">
-             {quotations.map(q => <tr key={q.id} className="hover:bg-gray-50 transition-all">
+             {quotations.map(q => {
+               const statusMeta = getStatusMeta(q.status);
+               return <tr key={q.id} className="hover:bg-gray-50 transition-all">
                <td className="p-4">
                  <p className="text-sm font-bold text-gray-800">{q.clientName}</p>
                  <p className="text-[10px] text-gray-400 font-mono">{q.id}</p>
-                 <div className="flex gap-1 mt-1">
-                   <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold ${
-                     q.status === QuotationStatus.ACCEPTED ? 'bg-green-100 text-green-700' :
-                     q.status === QuotationStatus.REJECTED ? 'bg-red-100 text-red-700' :
-                     q.status === QuotationStatus.SUBMITTED ? 'bg-blue-100 text-blue-700' :
-                     'bg-gray-100 text-gray-700'
-                   }`}>
-                     {q.status === QuotationStatus.ACCEPTED ? 'موافق عليه' :
-                      q.status === QuotationStatus.REJECTED ? 'مرفوض' :
-                      q.status === QuotationStatus.SUBMITTED ? 'تم الإرسال' : 'معلق'}
-                   </span>
-                 </div>
                </td>
                <td className="p-4">
                  <p className="text-sm font-black text-purple-600">{q.total.toLocaleString()} {CURRENCY_SYMBOLS[q.currency]}</p>
                  <p className="text-[9px] text-gray-400 font-bold">{getEquivalentAmount(q.total, q.currency, q.exchangeRate).toLocaleString(undefined, {maximumFractionDigits:2})} {q.currency === 'IQD' ? '$' : 'د.ع'}</p>
                </td>
-               <td className="p-4 flex flex-wrap items-center justify-center gap-1">
-                 <button onClick={() => setSelectedQuotation(q)} className="bg-purple-50 text-purple-600 px-2 py-1 rounded-lg text-[9px] font-black">🖨️ طباعة</button>
+               <td className="p-4">
+                 <span className={`inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-black ${statusMeta.className}`}>
+                   {statusMeta.label}
+                 </span>
+               </td>
+               <td className="p-4">
+                 <div className="flex flex-wrap items-center justify-center gap-2">
+                   <button
+                     onClick={() => setSelectedQuotation(q)}
+                     className="inline-flex items-center gap-2 rounded-full border border-purple-200 bg-purple-50 px-4 py-2 text-xs font-black text-purple-700 transition-all hover:border-purple-500 hover:bg-purple-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                     title="طباعة العرض"
+                   >
+                     <PrintIcon />
+                     <span>طباعة</span>
+                   </button>
                  {canEdit && (
                    <>
-                     <div className="flex gap-1 border-r pr-1 border-gray-200">
-                       <button onClick={() => onStatusUpdate(q.id, QuotationStatus.PENDING)} className="bg-gray-50 text-gray-600 p-1 rounded hover:bg-gray-100" title="معلق">⏳</button>
-                       <button onClick={() => onStatusUpdate(q.id, QuotationStatus.SUBMITTED)} className="bg-blue-50 text-blue-600 p-1 rounded hover:bg-blue-100" title="تم الإرسال">📤</button>
-                       <button onClick={() => onStatusUpdate(q.id, QuotationStatus.ACCEPTED)} className="bg-green-50 text-green-600 p-1 rounded hover:bg-green-100" title="موافق عليه">✅</button>
-                       <button onClick={() => onStatusUpdate(q.id, QuotationStatus.REJECTED)} className="bg-red-50 text-red-600 p-1 rounded hover:bg-red-100" title="مرفوض">❌</button>
+                     <div className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white p-1.5 shadow-sm">
+                       <button
+                         onClick={() => onStatusUpdate(q.id, QuotationStatus.PENDING)}
+                         className="h-9 w-9 rounded-full bg-gray-50 text-gray-600 transition-all hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300/60"
+                         title="معلق"
+                         aria-label="تغيير الحالة إلى معلق"
+                       >
+                         <StatusIcon label="⏳" />
+                       </button>
+                       <button
+                         onClick={() => onStatusUpdate(q.id, QuotationStatus.SUBMITTED)}
+                         className="h-9 w-9 rounded-full bg-blue-50 text-blue-600 transition-all hover:bg-blue-100 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300/60"
+                         title="تم الإرسال"
+                         aria-label="تغيير الحالة إلى تم الإرسال"
+                       >
+                         <StatusIcon label="📤" />
+                       </button>
+                       <button
+                         onClick={() => onStatusUpdate(q.id, QuotationStatus.ACCEPTED)}
+                         className="h-9 w-9 rounded-full bg-green-50 text-green-600 transition-all hover:bg-green-100 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-green-300/60"
+                         title="موافق عليه"
+                         aria-label="تغيير الحالة إلى موافق عليه"
+                       >
+                         <StatusIcon label="✓" />
+                       </button>
+                       <button
+                         onClick={() => onStatusUpdate(q.id, QuotationStatus.REJECTED)}
+                         className="h-9 w-9 rounded-full bg-red-50 text-red-600 transition-all hover:bg-red-100 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-300/60"
+                         title="مرفوض"
+                         aria-label="تغيير الحالة إلى مرفوض"
+                       >
+                         <StatusIcon label="✕" />
+                       </button>
                      </div>
-                     <button onClick={() => onDelete(q.id)} className="text-red-200 hover:text-red-400 p-1">🗑️</button>
+                     <button
+                       onClick={() => setPendingDeleteId(q.id)}
+                       className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-red-100 bg-red-50 text-red-400 transition-all hover:border-red-300 hover:bg-red-100 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-300/60"
+                       title="حذف العرض"
+                       aria-label="حذف العرض"
+                     >
+                       <DeleteIcon />
+                     </button>
                    </>
                  )}
+                 </div>
                </td>
-             </tr>)}
+             </tr>;
+             })}
            </tbody>
          </table>
       </div>
+      <ConfirmDialog
+        isOpen={!!pendingDeleteId}
+        title="تاكيد حذف عرض السعر"
+        message="هل تريد حذف عرض السعر المحدد؟ لا يمكن التراجع بعد الحذف."
+        confirmText="حذف"
+        cancelText="الغاء"
+        onConfirm={() => {
+          if (pendingDeleteId) onDelete(pendingDeleteId);
+          setPendingDeleteId(null);
+        }}
+        onCancel={() => setPendingDeleteId(null)}
+      />
     </div>
   );
 };

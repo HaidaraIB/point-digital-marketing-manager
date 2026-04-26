@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { Contract, AgencySettings, ContractClause, Currency } from '../types.ts';
 // Fixed: Changed CURRENCY to CURRENCY_SYMBOLS as it's the correct export from constants.tsx
 import { CURRENCY_SYMBOLS, DEFAULT_CLAUSES } from '../constants.tsx';
+import ConfirmDialog from './ConfirmDialog.tsx';
+import { DeleteIcon } from './ActionIcons.tsx';
 
 interface Props {
   contracts: Contract[];
@@ -16,6 +18,7 @@ interface Props {
 const ContractManager: React.FC<Props> = ({ contracts, settings, onAdd, onDelete, canEdit = true }) => {
   const [showForm, setShowForm] = useState(false);
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   // Form states
   const [partyAName, setPartyAName] = useState(settings.name);
@@ -269,7 +272,16 @@ const ContractManager: React.FC<Props> = ({ contracts, settings, onAdd, onDelete
             <div className="absolute top-0 right-0 w-1 bg-purple-600 h-full"></div>
             <div className="flex justify-between items-start mb-4">
               <div className="p-3 bg-purple-50 rounded-xl text-xl">🏛️</div>
-              {canEdit && <button onClick={() => onDelete(c.id)} className="text-red-400 opacity-0 group-hover:opacity-100 p-1">🗑️</button>}
+              {canEdit && (
+                <button
+                  onClick={() => setPendingDeleteId(c.id)}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-red-100 bg-red-50 text-red-400 opacity-0 transition-all group-hover:opacity-100 hover:border-red-300 hover:bg-red-100 hover:text-red-600"
+                  title="حذف"
+                  aria-label="حذف"
+                >
+                  <DeleteIcon />
+                </button>
+              )}
             </div>
             <h3 className="font-bold text-gray-900 mb-1">{c.partyBName}</h3>
             <p className="text-[10px] text-gray-400 mb-3 truncate">{c.subject}</p>
@@ -286,6 +298,18 @@ const ContractManager: React.FC<Props> = ({ contracts, settings, onAdd, onDelete
           </div>
         )}
       </div>
+      <ConfirmDialog
+        isOpen={!!pendingDeleteId}
+        title="تاكيد حذف العقد"
+        message="هل تريد حذف هذا العقد؟"
+        confirmText="حذف"
+        cancelText="الغاء"
+        onConfirm={() => {
+          if (pendingDeleteId) onDelete(pendingDeleteId);
+          setPendingDeleteId(null);
+        }}
+        onCancel={() => setPendingDeleteId(null)}
+      />
     </div>
   );
 };

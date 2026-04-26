@@ -25,7 +25,7 @@ const PhoneInput: React.FC<Props> = ({ value, onChange, placeholder }) => {
   };
 
   return (
-    <div className="flex gap-1" dir="ltr">
+    <div className="flex gap-2 min-w-0 w-full" dir="ltr">
       <select 
         value={selectedCode}
         onChange={handleCodeChange}
@@ -39,7 +39,7 @@ const PhoneInput: React.FC<Props> = ({ value, onChange, placeholder }) => {
         type="tel"
         value={localNumber}
         onChange={handleNumberChange}
-        className="flex-1 p-2.5 bg-gray-50 border border-gray-200 rounded-r-xl outline-none focus:ring-2 focus:ring-purple-500 text-sm font-bold tracking-widest"
+        className="flex-1 min-w-0 p-2.5 bg-gray-50 border border-gray-200 rounded-r-xl outline-none focus:ring-2 focus:ring-purple-500 text-sm font-bold tracking-widest"
         placeholder={placeholder || '770 000 0000'}
       />
     </div>

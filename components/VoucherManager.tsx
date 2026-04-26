@@ -4,6 +4,8 @@ import { Voucher, VoucherType, AgencySettings, SMSLog, Currency } from '../types
 import { CURRENCY_SYMBOLS } from '../constants.tsx';
 import { sendSMS } from '../services/smsService.ts';
 import PhoneInput from './PhoneInput.tsx';
+import ConfirmDialog from './ConfirmDialog.tsx';
+import { DeleteIcon } from './ActionIcons.tsx';
 
 interface Props {
   vouchers: Voucher[];
@@ -23,7 +25,9 @@ const VoucherManager: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete, 
   const [partyName, setPartyName] = useState('');
   const [partyPhone, setPartyPhone] = useState('');
   const [description, setDescription] = useState('');
+  const [voucherDate, setVoucherDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [isSending, setIsSending] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const getEquivalentAmount = (amt: number, curr: Currency, rate?: number) => {
     const r = rate ?? settings.exchangeRate;
@@ -45,7 +49,7 @@ const VoucherManager: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete, 
       partyName,
       partyPhone,
       description,
-      date: new Date().toLocaleDateString('ar-IQ'),
+      date: voucherDate,
       category: 'VOUCHER',
       exchangeRate: settings.exchangeRate,
     };
@@ -68,6 +72,7 @@ const VoucherManager: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete, 
     setPartyName('');
     setPartyPhone('');
     setDescription('');
+    setVoucherDate(new Date().toISOString().split('T')[0]);
     setShowForm(false);
     setIsSending(false);
   };
@@ -100,11 +105,11 @@ const VoucherManager: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete, 
 
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="flex gap-2 items-center">
-              <span className="text-[10px] font-black text-gray-400 uppercase">Voucher ID:</span>
+              <span className="text-[10px] font-black text-gray-400">رقم الوصل:</span>
               <span className="text-sm font-black text-black">{voucher.id}</span>
             </div>
             <div className="flex gap-2 items-center justify-end">
-              <span className="text-[10px] font-black text-gray-400 uppercase">Date:</span>
+              <span className="text-[10px] font-black text-gray-400">التاريخ:</span>
               <span className="text-sm font-black text-black">{voucher.date}</span>
             </div>
           </div>
@@ -137,11 +142,11 @@ const VoucherManager: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete, 
 
         <div className="grid grid-cols-2 gap-10 pt-8 mt-4 border-t-2 border-gray-100">
           <div className="text-center">
-            <p className="font-black text-[11px] text-black mb-6">توقيع المستلم</p>
+            <p className="font-black text-[11px] text-black mb-6">توقيع المدير</p>
             <div className="border-b border-gray-200 w-full h-6"></div>
           </div>
           <div className="text-center">
-            <p className="font-black text-[11px] text-black mb-6">المحاسب (الختم)</p>
+            <p className="font-black text-[11px] text-black mb-6">المدير (الختم)</p>
             <div className="border border-dashed border-gray-200 rounded-full w-16 h-16 mx-auto flex items-center justify-center">
               <img src={settings.logo} className="h-8 opacity-5 grayscale" alt="watermark" />
             </div>
@@ -193,7 +198,11 @@ const VoucherManager: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete, 
             <button type="button" onClick={() => setType(VoucherType.PAYMENT)} className={`flex-1 py-3 rounded-xl border-2 font-black text-sm transition-all ${type === VoucherType.PAYMENT ? 'bg-red-600 text-white border-red-600 shadow-lg' : 'bg-gray-50 text-gray-400 border-transparent'}`}>وصل صرف ↑</button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div>
+              <label className="block text-[10px] font-black text-gray-400 mb-1">التاريخ</label>
+              <input type="date" value={voucherDate} onChange={(e) => setVoucherDate(e.target.value)} className={inputClass} required />
+            </div>
             <div>
               <label className="block text-[10px] font-black text-gray-400 mb-1">اسم الطرف الآخر</label>
               <input type="text" value={partyName} onChange={(e) => setPartyName(e.target.value)} className={inputClass} placeholder="الاسم" required />
@@ -235,9 +244,9 @@ const VoucherManager: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete, 
       )}
 
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden no-print">
-        <table className="w-full text-right">
+        <table className="w-full text-center">
           <thead className="bg-gray-50 border-b">
-            <tr className="text-right">
+            <tr className="text-center">
               <th className="p-4 text-xs font-black text-gray-400">النوع</th>
               <th className="p-4 text-xs font-black text-gray-400">الطرف</th>
               <th className="p-4 text-xs font-black text-gray-400">المبلغ</th>
@@ -257,7 +266,16 @@ const VoucherManager: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete, 
                   <td className="p-4 text-xs text-gray-500 max-w-[200px] truncate">{v.description}</td>
                   <td className="p-4 flex items-center justify-center gap-2">
                     <button onClick={() => setSelectedVoucher(v)} className="bg-purple-50 text-purple-600 px-3 py-1 rounded-lg text-[10px] font-black hover:bg-purple-600 hover:text-white transition-all">🖨️ طباعة</button>
-                    {canEdit && <button onClick={() => onDelete(v.id)} className="text-red-300 hover:text-red-600 transition-colors">🗑️</button>}
+                    {canEdit && (
+                      <button
+                        onClick={() => setPendingDeleteId(v.id)}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-red-100 bg-red-50 text-red-400 transition-all hover:border-red-300 hover:bg-red-100 hover:text-red-600"
+                        title="حذف"
+                        aria-label="حذف"
+                      >
+                        <DeleteIcon />
+                      </button>
+                    )}
                   </td>
                 </tr>
               );
@@ -265,6 +283,18 @@ const VoucherManager: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete, 
           </tbody>
         </table>
       </div>
+      <ConfirmDialog
+        isOpen={!!pendingDeleteId}
+        title="تاكيد حذف الوصل"
+        message="هل تريد حذف هذا الوصل المالي؟"
+        confirmText="حذف"
+        cancelText="الغاء"
+        onConfirm={() => {
+          if (pendingDeleteId) onDelete(pendingDeleteId);
+          setPendingDeleteId(null);
+        }}
+        onCancel={() => setPendingDeleteId(null)}
+      />
     </div>
   );
 };

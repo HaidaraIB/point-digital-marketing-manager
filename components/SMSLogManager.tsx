@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { SMSLog } from '../types.ts';
+import { DeleteIcon } from './ActionIcons.tsx';
 
 interface Props {
   logs: SMSLog[];
@@ -19,9 +20,10 @@ const SMSLogManager: React.FC<Props> = ({ logs, onClear, canClear = true }) => {
         {canClear && (
           <button 
             onClick={onClear}
-            className="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-red-600 hover:text-white transition-all"
+            className="inline-flex items-center gap-2 bg-red-50 text-red-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-red-600 hover:text-white transition-all"
           >
-            🗑️ مسح السجل
+            <DeleteIcon />
+            <span>مسح السجل</span>
           </button>
         )}
       </div>
@@ -30,7 +32,7 @@ const SMSLogManager: React.FC<Props> = ({ logs, onClear, canClear = true }) => {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b">
-              <tr className="text-right">
+              <tr className="text-center">
                 <th className="p-4 text-xs font-black text-gray-400">الحالة</th>
                 <th className="p-4 text-xs font-black text-gray-400">المستلم</th>
                 <th className="p-4 text-xs font-black text-gray-400">محتوى الرسالة</th>

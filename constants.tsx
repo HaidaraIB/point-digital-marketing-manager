@@ -45,6 +45,7 @@ export const DEFAULT_CLAUSES: ContractClause[] = [
 export const INITIAL_DATA: AppData = {
   quotations: [],
   vouchers: [],
+  monthlyOpeningBalances: [],
   contracts: [],
   freelancers: [],
   freelanceWorks: [],

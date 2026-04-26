@@ -16,6 +16,7 @@ import OwnerWithdrawals from './components/OwnerWithdrawals.tsx';
 import FreelanceManager from './components/FreelanceManager.tsx';
 import SMSLogManager from './components/SMSLogManager.tsx';
 import Login from './components/Login.tsx';
+import ConfirmDialog from './components/ConfirmDialog.tsx';
 
 const App: React.FC = () => {
   const [data, setData] = useState<AppData>(INITIAL_DATA);
@@ -24,6 +25,7 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
 
   const STORAGE_KEY = 'noqta_data';
   const useApi = isApiEnabled();
@@ -48,6 +50,7 @@ const App: React.FC = () => {
           if (!parsed.smsLogs) parsed.smsLogs = [];
           if (!parsed.freelancers) parsed.freelancers = [];
           if (!parsed.freelanceWorks) parsed.freelanceWorks = [];
+          if (!parsed.monthlyOpeningBalances) parsed.monthlyOpeningBalances = [];
           setData(parsed);
         }
       }
@@ -105,6 +108,13 @@ const App: React.FC = () => {
     if (useApi) logoutApi();
   };
 
+  const openLogoutDialog = () => setIsLogoutDialogOpen(true);
+  const closeLogoutDialog = () => setIsLogoutDialogOpen(false);
+  const confirmLogout = () => {
+    closeLogoutDialog();
+    handleLogout();
+  };
+
   const addSMSLog = async (log: Omit<SMSLog, 'id' | 'timestamp'>) => {
     if (useApi) {
       try {
@@ -143,7 +153,7 @@ const App: React.FC = () => {
           clientName: q.clientName,
           clientPhone: q.clientPhone,
           date: q.date,
-          items: q.items.map(i => ({ description: i.description, price: i.price, quantity: i.quantity, currency: i.currency })),
+          items: q.items.map(i => ({ description: i.description, details: i.details, price: i.price, quantity: i.quantity, currency: i.currency })),
           status: q.status,
           note: q.note,
           currency: q.currency,
@@ -477,7 +487,7 @@ const App: React.FC = () => {
           <div className="max-w-7xl mx-auto space-y-8">
             <header className="hidden lg:flex mb-6 justify-between items-center no-print">
               <h1 className="text-xl font-bold text-gray-800">أهلاً بك، {user.name.split(' ')[0]}</h1>
-              <button onClick={handleLogout} className="text-xs bg-gray-100 hover:bg-red-50 hover:text-red-500 px-3 py-2 rounded-lg font-bold transition-all text-gray-500">
+              <button onClick={openLogoutDialog} className="text-xs bg-gray-100 hover:bg-red-50 hover:text-red-500 px-3 py-2 rounded-lg font-bold transition-all text-gray-500">
                 تسجيل الخروج
               </button>
             </header>
@@ -537,6 +547,7 @@ const App: React.FC = () => {
             vouchers={data.vouchers}
             settings={data.settings}
             onAdd={handleAddVoucher}
+            onUpdate={handleUpdateVoucher}
             onDelete={handleDeleteVoucher}
           />
         )}
@@ -565,6 +576,15 @@ const App: React.FC = () => {
           </div>
         </main>
       </div>
+      <ConfirmDialog
+        isOpen={isLogoutDialogOpen}
+        title="تاكيد تسجيل الخروج"
+        message="هل تريد تسجيل الخروج الان؟"
+        confirmText="تسجيل الخروج"
+        cancelText="رجوع"
+        onConfirm={confirmLogout}
+        onCancel={closeLogoutDialog}
+      />
     </div>
   );
 };

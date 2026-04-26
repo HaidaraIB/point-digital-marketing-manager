@@ -1,20 +1,26 @@
 import React, { useState, useMemo } from 'react';
 import { Voucher, VoucherType, AgencySettings, Currency } from '../types.ts';
 import { CURRENCY_SYMBOLS } from '../constants.tsx';
+import ConfirmDialog from './ConfirmDialog.tsx';
+import { DeleteIcon, EditIcon } from './ActionIcons.tsx';
 
 interface Props {
   vouchers: Voucher[];
   settings: AgencySettings;
   onAdd: (v: Voucher) => void;
+  onUpdate: (v: Voucher) => void;
   onDelete: (id: string) => void;
 }
 
-const OwnerWithdrawals: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete }) => {
+const OwnerWithdrawals: React.FC<Props> = ({ vouchers, settings, onAdd, onUpdate, onDelete }) => {
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [amount, setAmount] = useState(0);
   const [currency, setCurrency] = useState<Currency>('IQD');
+  const [withdrawalDate, setWithdrawalDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const withdrawals = useMemo(() =>
     vouchers.filter(v => v.category === 'OWNER_WITHDRAWAL'),
@@ -34,22 +40,34 @@ const OwnerWithdrawals: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete
     setIsSaving(true);
 
     const newWithdrawal: Voucher = {
-      id: `WD-${Date.now().toString().slice(-6)}`,
+      id: editingId || `WD-${Date.now().toString().slice(-6)}`,
       type: VoucherType.PAYMENT,
       amount,
       currency,
       partyName: "مالك الوكالة",
       description,
-      date: new Date().toLocaleDateString('ar-IQ'),
+      date: withdrawalDate,
       category: 'OWNER_WITHDRAWAL',
       exchangeRate: settings.exchangeRate,
     };
 
-    onAdd(newWithdrawal);
+    if (editingId) onUpdate(newWithdrawal);
+    else onAdd(newWithdrawal);
+    setEditingId(null);
     setAmount(0);
     setDescription('');
+    setWithdrawalDate(new Date().toISOString().split('T')[0]);
     setShowForm(false);
     setIsSaving(false);
+  };
+
+  const handleEdit = (w: Voucher) => {
+    setEditingId(w.id);
+    setAmount(w.amount);
+    setCurrency(w.currency || 'IQD');
+    setDescription(w.description);
+    setWithdrawalDate(w.date);
+    setShowForm(true);
   };
 
   const inputClass = "w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-purple-500/10 outline-none text-sm transition-all";
@@ -81,6 +99,10 @@ const OwnerWithdrawals: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete
               <input type="number" value={amount === 0 ? '' : amount} onChange={(e)=>setAmount(Number(e.target.value))} className={inputClass} placeholder="0" required />
             </div>
             <div>
+              <label className="block text-[10px] font-black text-gray-400 mb-1">التاريخ</label>
+              <input type="date" value={withdrawalDate} onChange={(e)=>setWithdrawalDate(e.target.value)} className={inputClass} required />
+            </div>
+            <div>
               <label className="block text-[10px] font-black text-gray-400 mb-1">سبب السحب / البيان</label>
               <input type="text" value={description} onChange={(e)=>setDescription(e.target.value)} className={inputClass} placeholder="أرباح شهرية، مصاريف خاصة..." required />
             </div>
@@ -96,13 +118,13 @@ const OwnerWithdrawals: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete
           )}
 
           <button type="submit" disabled={isSaving} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-indigo-700 transition-all flex items-center justify-center gap-2">
-            {isSaving ? 'جاري الحفظ...' : 'تأكيد عملية السحب 🏦'}
+            {isSaving ? 'جاري الحفظ...' : editingId ? 'تحديث السحب' : 'تأكيد عملية السحب 🏦'}
           </button>
         </form>
       )}
 
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-        <table className="w-full text-right">
+        <table className="w-full text-center">
           <thead className="bg-gray-50 border-b">
             <tr>
               <th className="p-4 text-xs font-black text-gray-400">التاريخ</th>
@@ -119,8 +141,23 @@ const OwnerWithdrawals: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete
                 <td className="p-4 text-sm font-bold text-gray-800">{w.description}</td>
                 <td className="p-4 text-sm font-black text-indigo-600">{w.amount.toLocaleString()} {CURRENCY_SYMBOLS[w.currency]}</td>
                 <td className="p-4 text-[10px] text-gray-400 font-bold">{getEquivalentAmount(w.amount, w.currency, w.exchangeRate).toLocaleString(undefined, {maximumFractionDigits:2})} {w.currency === 'IQD' ? '$' : 'د.ع'}</td>
-                <td className="p-4 text-center">
-                  <button onClick={() => onDelete(w.id)} className="text-red-300 hover:text-red-500 transition-colors">🗑️</button>
+                <td className="p-4 text-center flex items-center justify-center gap-3">
+                  <button
+                    onClick={() => handleEdit(w)}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-indigo-100 bg-indigo-50 text-indigo-500 transition-all hover:border-indigo-300 hover:bg-indigo-100 hover:text-indigo-700"
+                    title="تعديل"
+                    aria-label="تعديل"
+                  >
+                    <EditIcon />
+                  </button>
+                  <button
+                    onClick={() => setPendingDeleteId(w.id)}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-red-100 bg-red-50 text-red-400 transition-all hover:border-red-300 hover:bg-red-100 hover:text-red-600"
+                    title="حذف"
+                    aria-label="حذف"
+                  >
+                    <DeleteIcon />
+                  </button>
                 </td>
               </tr>
             ))}
@@ -132,6 +169,18 @@ const OwnerWithdrawals: React.FC<Props> = ({ vouchers, settings, onAdd, onDelete
           </tbody>
         </table>
       </div>
+      <ConfirmDialog
+        isOpen={!!pendingDeleteId}
+        title="تاكيد حذف السحب"
+        message="هل تريد حذف سجل السحب هذا؟"
+        confirmText="حذف"
+        cancelText="الغاء"
+        onConfirm={() => {
+          if (pendingDeleteId) onDelete(pendingDeleteId);
+          setPendingDeleteId(null);
+        }}
+        onCancel={() => setPendingDeleteId(null)}
+      />
     </div>
   );
 };

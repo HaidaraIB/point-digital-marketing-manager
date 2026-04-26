@@ -3,6 +3,9 @@ import React, { useState, useMemo } from 'react';
 import { Freelancer, FreelanceWork, AgencySettings, Currency, VoucherType, Voucher } from '../types.ts';
 import { CURRENCY_SYMBOLS } from '../constants.tsx';
 import PhoneInput from './PhoneInput.tsx';
+import ConfirmDialog from './ConfirmDialog.tsx';
+import StatusDialog from './StatusDialog.tsx';
+import { DeleteIcon, EditIcon } from './ActionIcons.tsx';
 
 interface Props {
   freelancers: Freelancer[];
@@ -42,6 +45,8 @@ const FreelanceManager: React.FC<Props> = ({ freelancers, works, settings, onAdd
 
   // Selected for Printing Settlement
   const [printSettlement, setPrintSettlement] = useState<{ freelancer: Freelancer, works: FreelanceWork[], month: string } | null>(null);
+  const [pendingDeleteWork, setPendingDeleteWork] = useState<FreelanceWork | null>(null);
+  const [statusDialog, setStatusDialog] = useState<{ type: 'success' | 'error'; title: string; message: string } | null>(null);
 
   const handleAddFreelancer = (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,8 +110,7 @@ const FreelanceManager: React.FC<Props> = ({ freelancers, works, settings, onAdd
   };
 
   const handleDelete = (w: FreelanceWork) => {
-    const msg = w.isPaid ? 'هذا العمل تم صرفه. هل تريد الحذف على أي حال؟' : 'هل أنت متأكد من حذف هذا العمل؟';
-    if (window.confirm(msg)) onDeleteWork(w.id);
+    setPendingDeleteWork(w);
   };
 
   const settlementData = useMemo(() => {
@@ -136,8 +140,20 @@ const FreelanceManager: React.FC<Props> = ({ freelancers, works, settings, onAdd
       exchangeRate: settings.exchangeRate,
     };
 
-    onPayWork(settlementData.map(w => w.id), voucher);
-    alert('تم تسجيل عملية الصرف بنجاح');
+    try {
+      onPayWork(settlementData.map(w => w.id), voucher);
+      setStatusDialog({
+        type: 'success',
+        title: 'تمت العملية بنجاح',
+        message: 'تم تسجيل عملية صرف المستحقات بنجاح.',
+      });
+    } catch {
+      setStatusDialog({
+        type: 'error',
+        title: 'فشل تنفيذ العملية',
+        message: 'تعذر تسجيل عملية الصرف حالياً. حاول مرة أخرى.',
+      });
+    }
   };
 
   const handlePrintSettlement = () => {
@@ -175,9 +191,9 @@ const FreelanceManager: React.FC<Props> = ({ freelancers, works, settings, onAdd
           <table className="w-full text-xs border-collapse border border-black mb-6">
             <thead>
               <tr className="bg-gray-200">
-                <th className="border border-black p-2 text-right">التاريخ</th>
-                <th className="border border-black p-2 text-right">وصف العمل (القطعة)</th>
-                <th className="border border-black p-2 text-left">المبلغ</th>
+                <th className="border border-black p-2 text-center">التاريخ</th>
+                <th className="border border-black p-2 text-center">وصف العمل (القطعة)</th>
+                <th className="border border-black p-2 text-center">المبلغ</th>
               </tr>
             </thead>
             <tbody>
@@ -185,14 +201,14 @@ const FreelanceManager: React.FC<Props> = ({ freelancers, works, settings, onAdd
                 <tr key={w.id}>
                   <td className="border border-black p-2">{w.date}</td>
                   <td className="border border-black p-2">{w.description}</td>
-                  <td className="border border-black p-2 text-left">{w.price.toLocaleString()} {CURRENCY_SYMBOLS[w.currency]}</td>
+                  <td className="border border-black p-2 text-center">{w.price.toLocaleString()} {CURRENCY_SYMBOLS[w.currency]}</td>
                 </tr>
               ))}
             </tbody>
             <tfoot>
               <tr className="font-black bg-gray-100">
-                <td colSpan={2} className="border border-black p-2 text-left">الإجمالي المستحق للصرف</td>
-                <td className="border border-black p-2 text-left">{printSettlement.works.reduce((s,w)=>s+w.price,0).toLocaleString()} {CURRENCY_SYMBOLS[printSettlement.works[0].currency]}</td>
+                <td colSpan={2} className="border border-black p-2 text-center">الإجمالي المستحق للصرف</td>
+                <td className="border border-black p-2 text-center">{printSettlement.works.reduce((s,w)=>s+w.price,0).toLocaleString()} {CURRENCY_SYMBOLS[printSettlement.works[0].currency]}</td>
               </tr>
             </tfoot>
           </table>
@@ -313,7 +329,7 @@ const FreelanceManager: React.FC<Props> = ({ freelancers, works, settings, onAdd
           )}
 
           <div className="bg-white rounded-2xl border overflow-hidden">
-            <table className="w-full text-right text-xs">
+            <table className="w-full text-center text-xs">
               <thead className="bg-gray-50 border-b font-black text-gray-400">
                 <tr>
                   <th className="p-4">التاريخ</th>
@@ -336,11 +352,23 @@ const FreelanceManager: React.FC<Props> = ({ freelancers, works, settings, onAdd
                     </td>
                     <td className="p-4">
                       <div className="flex gap-2 justify-center">
-                        <button type="button" onClick={() => handleStartEdit(w)} className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="تعديل">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                        <button
+                          type="button"
+                          onClick={() => handleStartEdit(w)}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-indigo-100 bg-indigo-50 text-indigo-500 transition-all hover:border-indigo-300 hover:bg-indigo-100 hover:text-indigo-700"
+                          title="تعديل"
+                          aria-label="تعديل"
+                        >
+                          <EditIcon />
                         </button>
-                        <button type="button" onClick={() => handleDelete(w)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="حذف">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(w)}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-red-100 bg-red-50 text-red-400 transition-all hover:border-red-300 hover:bg-red-100 hover:text-red-600"
+                          title="حذف"
+                          aria-label="حذف"
+                        >
+                          <DeleteIcon />
                         </button>
                       </div>
                     </td>
@@ -403,6 +431,25 @@ const FreelanceManager: React.FC<Props> = ({ freelancers, works, settings, onAdd
           )}
         </div>
       )}
+      <ConfirmDialog
+        isOpen={!!pendingDeleteWork}
+        title="تاكيد حذف العمل"
+        message={pendingDeleteWork?.isPaid ? 'هذا العمل تم صرفه مسبقاً. هل تريد الحذف على اي حال؟' : 'هل انت متاكد من حذف هذا العمل؟'}
+        confirmText="حذف"
+        cancelText="الغاء"
+        onConfirm={() => {
+          if (pendingDeleteWork) onDeleteWork(pendingDeleteWork.id);
+          setPendingDeleteWork(null);
+        }}
+        onCancel={() => setPendingDeleteWork(null)}
+      />
+      <StatusDialog
+        isOpen={!!statusDialog}
+        type={statusDialog?.type ?? 'success'}
+        title={statusDialog?.title ?? ''}
+        message={statusDialog?.message ?? ''}
+        onClose={() => setStatusDialog(null)}
+      />
     </div>
   );
 };

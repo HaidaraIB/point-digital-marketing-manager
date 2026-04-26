@@ -4,6 +4,8 @@ import { Voucher, VoucherType, AgencySettings, SMSLog, Currency } from '../types
 import { CURRENCY_SYMBOLS } from '../constants.tsx';
 import { sendSMS } from '../services/smsService.ts';
 import PhoneInput from './PhoneInput.tsx';
+import ConfirmDialog from './ConfirmDialog.tsx';
+import { DeleteIcon, EditIcon } from './ActionIcons.tsx';
 
 interface Props {
   vouchers: Voucher[];
@@ -27,9 +29,10 @@ const ExpenseManager: React.FC<Props> = ({ vouchers, settings, onAdd, onUpdate, 
   const [description, setDescription] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [reportType, setReportType] = useState<'NONE' | 'WEEKLY' | 'MONTHLY'>('NONE');
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const expenseVouchers = useMemo(() => 
-    vouchers.filter(v => v.category === 'DAILY' || v.category === 'SALARY'),
+    vouchers.filter(v => v.category === 'DAILY' || v.category === 'SALARY' || v.category === 'FREELANCE'),
     [vouchers]
   );
 
@@ -129,7 +132,7 @@ const ExpenseManager: React.FC<Props> = ({ vouchers, settings, onAdd, onUpdate, 
         </div>
         <div className="print-content bg-white mx-auto p-[20mm] rounded-xl shadow-2xl" style={{ width: '210mm', minHeight: '297mm' }}>
            <h2 className="text-2xl font-black border-b-2 border-black pb-4 mb-6">تقرير المصاريف والرواتب - {reportType === 'WEEKLY' ? 'أسبوعي' : 'شهري'}</h2>
-           <table className="w-full text-right border-collapse">
+           <table className="w-full text-center border-collapse">
              <thead>
                <tr className="bg-black text-white">
                  <th className="p-3 text-sm">التاريخ</th>
@@ -228,9 +231,9 @@ const ExpenseManager: React.FC<Props> = ({ vouchers, settings, onAdd, onUpdate, 
       )}
 
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden no-print">
-        <table className="w-full text-right">
+        <table className="w-full text-center">
            <thead className="bg-gray-50 border-b">
-             <tr className="text-right">
+             <tr className="text-center">
                <th className="p-4 text-xs font-black text-gray-400">النوع</th>
                <th className="p-4 text-xs font-black text-gray-400">المستفيد</th>
                <th className="p-4 text-xs font-black text-gray-400">البيان / الشهر</th>
@@ -241,19 +244,49 @@ const ExpenseManager: React.FC<Props> = ({ vouchers, settings, onAdd, onUpdate, 
            <tbody className="divide-y divide-gray-50">
              {expenseVouchers.map(v => (
                <tr key={v.id} className="hover:bg-gray-50">
-                 <td className="p-4"><span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${v.category === 'SALARY' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>{v.category === 'SALARY' ? 'راتب' : 'يومية'}</span></td>
+                 <td className="p-4"><span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${v.category === 'SALARY' ? 'bg-blue-100 text-blue-700' : v.category === 'FREELANCE' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'}`}>{v.category === 'SALARY' ? 'راتب' : v.category === 'FREELANCE' ? 'فري لانس' : 'يومية'}</span></td>
                  <td className="p-4 font-bold text-sm text-gray-800">{v.partyName}</td>
                  <td className="p-4 text-xs text-gray-500">{v.description}</td>
                  <td className="p-4 text-sm font-black text-red-600">{v.amount.toLocaleString()} {CURRENCY_SYMBOLS[v.currency]}</td>
                  <td className="p-4 flex items-center justify-center gap-2">
-                   {canEdit && <button onClick={() => handleEdit(v)} className="p-2 text-blue-400 hover:scale-110 transition-transform">✏️</button>}
-                   {canEdit && <button onClick={() => onDelete(v.id)} className="p-2 text-red-300 hover:text-red-500 transition-colors">🗑️</button>}
+                  {canEdit && (
+                    <button
+                      onClick={() => handleEdit(v)}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-indigo-100 bg-indigo-50 text-indigo-500 transition-all hover:border-indigo-300 hover:bg-indigo-100 hover:text-indigo-700"
+                      title="تعديل"
+                      aria-label="تعديل"
+                    >
+                      <EditIcon />
+                    </button>
+                  )}
+                  {canEdit && (
+                    <button
+                      onClick={() => setPendingDeleteId(v.id)}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-red-100 bg-red-50 text-red-400 transition-all hover:border-red-300 hover:bg-red-100 hover:text-red-600"
+                      title="حذف"
+                      aria-label="حذف"
+                    >
+                      <DeleteIcon />
+                    </button>
+                  )}
                  </td>
                </tr>
              ))}
            </tbody>
         </table>
       </div>
+      <ConfirmDialog
+        isOpen={!!pendingDeleteId}
+        title="تاكيد حذف المصروف"
+        message="هل تريد حذف هذا السجل من المصاريف؟"
+        confirmText="حذف"
+        cancelText="الغاء"
+        onConfirm={() => {
+          if (pendingDeleteId) onDelete(pendingDeleteId);
+          setPendingDeleteId(null);
+        }}
+        onCancel={() => setPendingDeleteId(null)}
+      />
     </div>
   );
 };
